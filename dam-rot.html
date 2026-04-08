@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dam Break ROT - NID API Version</title>
+  <style>
+    body { font-family: 'Avenir Next', 'Segoe UI', sans-serif; padding: 15px; color: #333; }
+    h4 { margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+    .input-group { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;}
+    label { font-weight: 600; font-size: 0.9em; color: #666; }
+    select, input { padding: 5px; border: 1px solid #ccc; border-radius: 4px; width: 120px;}
+    table { border-collapse: collapse; width: 100%; font-size: 0.9em; margin-top: 20px;}
+    th, td { border: 1px solid #e0e0e0; padding: 10px; text-align: left; }
+    th { background-color: #f8f9fa; font-weight: 600; }
+    .highlight { background-color: #e8f5e9; font-weight: bold; color: #2e7d32; }
+    .loading { color: #1976d2; font-style: italic; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+
+  <h4>Dam Break Rules of Thumb</h4>
+  
+  <div class="input-group">
+    <label>Dam Type:</label>
+    <span id="damType" style="width: 120px; font-weight: bold;">--</span>
+  </div>
+
+  <div class="input-group">
+    <label>Height Source:</label>
+    <select id="heightSelector">
+      <option value="hydraulic">Hydraulic Height</option>
+      <option value="structural">Structural Height</option>
+      <option value="nid_height">NID Height</option>
+    </select>
+  </div>
+
+  <div class="input-group">
+    <label>Head (ft):</label>
+    <input type="number" id="heightInput" step="0.1">
+  </div>
+
+  <div class="input-group">
+    <label>Volume (ac-ft):</label>
+    <input type="number" id="volumeInput" step="1">
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Est. Peak Outflow (cfs)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight">
+        <td>Froehlich</td>
+        <td id="froehlichQ">--</td>
+      </tr>
+      <tr>
+        <td>SMPDBK (Earthen)</td>
+        <td id="smpdbkQ">--</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <script>
+    // 1. Get the Federal ID from Experience Builder URL
+    const params = new URLSearchParams(window.location.search);
+    const federalId = params.get('federalId');
+    
+    // Object to store our fetched heights
+    let heights = { hydraulic: 0, structural: 0, nid_height: 0 };
+
+    // 2. Fetch data from USACE NID API
+    if (federalId) {
+      document.getElementById('damType').innerHTML = '<span class="loading">Fetching API...</span>';
+
+      fetch(`https://nid.sec.usace.army.mil/api/dams/${federalId}/inventory`)
+        .then(response => {
+          if (!response.ok) throw new Error('Network response was not ok');
+          return response.json();
+        })
+        .then(data => {
+          // Extract variables from the NID JSON payload
+          // Note: If values show as undefined, check browser console (F12) to verify API key casing
+          heights.hydraulic = data.hydraulicHeight || 0;
+          heights.structural = data.structuralHeight || 0;
+          heights.nid_height = data.nidHeight || 0;
+          
+          const volume = data.nidStorage || 0;
+          const type = data.primaryDamType || 'Unknown';
+
+          // Update UI
+          document.getElementById('damType').innerText = type;
+          document.getElementById('heightInput').value = heights.hydraulic; // Default selection
+          document.getElementById('volumeInput').value = volume;
+
+          // Run calculations
+          calculateQ();
+        })
+        .catch(error => {
+          console.error('Error fetching dam data:', error);
+          document.getElementById('damType').innerHTML = '<span style="color:red">API Error</span>';
+        });
+    } else {
+      document.getElementById('damType').innerText = 'Select a dam';
+    }
+
+    // 3. Calculation Logic
+    function calculateQ() {
+      const h = parseFloat(document.getElementById('heightInput').value) || 0;
+      const v = parseFloat(document.getElementById('volumeInput').value) || 0;
+
+      if (h > 0 && v > 0) {
+        // Froehlich
+        const froehlichQ = 60.7 * Math.pow(v, 0.295) * Math.pow(h, 1.24);
+        document.getElementById('froehlichQ').innerText = froehlichQ.toLocaleString('en-US', {maximumFractionDigits: 0});
+        
+        // SMPDBK (Assuming Earthen: Br = 3*Hw)
+        const breachWidth = 3 * h; 
+        const smpdbkQ = 3.1 * breachWidth * Math.pow(h, 1.5);
+        document.getElementById('smpdbkQ').innerText = smpdbkQ.toLocaleString('en-US', {maximumFractionDigits: 0});
+      } else {
+        document.getElementById('froehlichQ').innerText = '--';
+        document.getElementById('smpdbkQ').innerText = '--';
+      }
+    }
+
+    // 4. Interactive Listeners
+    document.getElementById('heightSelector').addEventListener('change', function(e) {
+      document.getElementById('heightInput').value = heights[e.target.value];
+      calculateQ();
+    });
+
+    document.getElementById('heightInput').addEventListener('input', calculateQ);
+    document.getElementById('volumeInput').addEventListener('input', calculateQ);
+
+  </script>
+</body>
+</html>
