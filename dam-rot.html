@@ -4,32 +4,33 @@
   <meta charset="UTF-8">
   <title>Dam Break ROT</title>
   <style>
-    body {background-color: white; font-family: 'Avenir Next', 'Segoe UI', sans-serif; padding: 15px; color: #333; }
-    h4 { margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-    .input-group { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;}
-    label { font-weight: 600; font-size: 0.9em; color: #666; }
-    select, input { padding: 5px; border: 1px solid #ccc; border-radius: 4px; width: 120px;}
-    table { border-collapse: collapse; width: 100%; font-size: 0.9em; margin-top: 20px;}
-    th, td { border: 1px solid #e0e0e0; padding: 10px; text-align: left; }
+    /* Condensed CSS Layout */
+    body { font-family: 'Avenir Next', 'Segoe UI', sans-serif; padding: 8px; margin: 0; color: #333; font-size: 0.85em; }
+    h4 { margin: 0 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #eee; font-size: 1.1em; color: #005e95; }
+    .header-id { font-weight: normal; color: #666; font-size: 0.85em; }
+    .input-group { margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+    label { font-weight: 600; color: #555; }
+    select, input { padding: 3px 5px; border: 1px solid #ccc; border-radius: 4px; width: 110px; font-size: 0.95em; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #e0e0e0; padding: 5px 8px; text-align: left; }
     th { background-color: #f8f9fa; font-weight: 600; }
     .highlight { background-color: #e8f5e9; font-weight: bold; color: #2e7d32; }
-    
   </style>
 </head>
 <body>
 
-  <h4>Dam Break Rules of Thumb</h4>
+  <h4><span id="damName">Select a Dam</span> <span class="header-id">(<span id="nidId">--</span>)</span></h4>
   
   <div class="input-group">
     <label>Dam Type:</label>
-    <span id="damType" style="width: 120px; font-weight: bold;">--</span>
+    <span id="damType" style="width: 110px; font-weight: 600;">--</span>
   </div>
 
   <div class="input-group">
     <label>Height Source:</label>
     <select id="heightSelector">
-      <option value="hydraulic">Hydraulic Height</option>
-      <option value="structural">Structural Height</option>
+      <option value="hydraulic">Hydraulic</option>
+      <option value="structural">Structural</option>
       <option value="nid_height">NID Height</option>
     </select>
   </div>
@@ -48,7 +49,7 @@
     <thead>
       <tr>
         <th>Method</th>
-        <th>Est. Peak Outflow (cfs)</th>
+        <th>Peak Outflow (cfs)</th>
       </tr>
     </thead>
     <tbody>
@@ -57,17 +58,19 @@
         <td id="froehlichQ">--</td>
       </tr>
       <tr>
-        <td>SMPDBK (Earthen)</td>
+        <td>SMPDBK</td>
         <td id="smpdbkQ">--</td>
       </tr>
     </tbody>
   </table>
 
   <script>
-    // 1. Get URL parameters passed directly from the Experience Builder map
+    // 1. Get URL parameters (Now including name and NIDID)
     const params = new URLSearchParams(window.location.search);
     
-    // Parse the heights into an object, defaulting to 0 if missing/null
+    const damNameParam = params.get('name') || 'Select a Dam';
+    const nidIdParam = params.get('nidid') || '--';
+    
     const heights = {
       hydraulic: parseFloat(params.get('hydraulic')) || 0,
       structural: parseFloat(params.get('structural')) || 0,
@@ -75,24 +78,27 @@
     };
     
     const volumeParam = parseFloat(params.get('volume')) || 0;
-    const damTypeParam = params.get('type') || 'Unknown';
+    const damTypeParam = params.get('type') || '--';
 
-    // 2. Populate the UI with the extracted data
+    // 2. Populate the UI elements
+    document.getElementById('damName').innerText = damNameParam;
+    document.getElementById('nidId').innerText = nidIdParam;
     document.getElementById('damType').innerText = damTypeParam;
-    document.getElementById('heightInput').value = heights.hydraulic; // Set Hydraulic as default
+    
+    document.getElementById('heightInput').value = heights.hydraulic;
     document.getElementById('volumeInput').value = volumeParam;
 
-    // 3. The Calculation Logic
+    // 3. Calculation Logic
     function calculateQ() {
       const h = parseFloat(document.getElementById('heightInput').value) || 0;
       const v = parseFloat(document.getElementById('volumeInput').value) || 0;
 
       if (h > 0 && v > 0) {
-        // Froehlich Peak Q Formula
+        // Froehlich
         const froehlichQ = 60.7 * Math.pow(v, 0.295) * Math.pow(h, 1.24);
         document.getElementById('froehlichQ').innerText = froehlichQ.toLocaleString('en-US', {maximumFractionDigits: 0});
         
-        // Basic SMPDBK Peak Q placeholder
+        // SMPDBK (Assuming Br = 3*Hw)
         const breachWidth = 3 * h; 
         const smpdbkQ = 3.1 * breachWidth * Math.pow(h, 1.5);
         document.getElementById('smpdbkQ').innerText = smpdbkQ.toLocaleString('en-US', {maximumFractionDigits: 0});
@@ -103,17 +109,14 @@
     }
 
     // 4. Interactive Event Listeners
-    // When the user picks a different height from the dropdown, update the input box
     document.getElementById('heightSelector').addEventListener('change', function(e) {
       document.getElementById('heightInput').value = heights[e.target.value];
       calculateQ();
     });
 
-    // When the user manually types a new number, recalculate instantly
     document.getElementById('heightInput').addEventListener('input', calculateQ);
     document.getElementById('volumeInput').addEventListener('input', calculateQ);
 
-    // Run the math once when the page loads
     calculateQ();
   </script>
 </body>
