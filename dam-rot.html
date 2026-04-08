@@ -2,93 +2,133 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Dam Break ROT</title>
+  <title>Dam Break Analysis</title>
   <style>
-    /* Condensed CSS Layout */
-    body { font-family: 'Avenir Next', 'Segoe UI', sans-serif; padding: 8px; margin: 0; color: #333; font-size: 0.85em; }
-    h4 { margin: 0 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #eee; font-size: 1.1em; color: #005e95; }
+    /* Global Reset & Container */
+    body { font-family: 'Avenir Next', 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; display: flex; justify-content: center; }
+    .widget-container { background: #fff; width: 100%; max-width: 400px; padding: 12px; box-sizing: border-box; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    
+    /* Header */
+    h4 { margin: 0 0 10px 0; font-size: 1.1em; color: #005e95; text-align: center; }
     .header-id { font-weight: normal; color: #666; font-size: 0.85em; }
-    .input-group { margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+    
+    /* Tabs CSS */
+    .tab-bar { display: flex; border-bottom: 2px solid #eee; margin-bottom: 12px; }
+    .tab-button { flex: 1; background: none; border: none; padding: 8px 0; cursor: pointer; font-size: 0.9em; font-weight: 600; color: #777; transition: 0.2s; }
+    .tab-button:hover { color: #333; background-color: #f9f9f9; }
+    .tab-button.active { color: #005e95; border-bottom: 2px solid #005e95; margin-bottom: -2px; }
+    .tab-content { display: none; animation: fadeIn 0.3s; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Inputs & Tables (Condensed) */
+    .input-group { margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 0.85em; }
     label { font-weight: 600; color: #555; }
-    select, input { padding: 3px 5px; border: 1px solid #ccc; border-radius: 4px; width: 110px; font-size: 0.95em; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #e0e0e0; padding: 5px 8px; text-align: left; }
+    select, input { padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; width: 110px; font-size: 0.95em; }
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 0.85em; }
+    th, td { border: 1px solid #e0e0e0; padding: 6px 8px; text-align: left; }
     th { background-color: #f8f9fa; font-weight: 600; }
     .highlight { background-color: #e8f5e9; font-weight: bold; color: #2e7d32; }
   </style>
 </head>
 <body>
 
-  <h4><span id="damName">Select a Dam</span> <span class="header-id">(<span id="nidId">--</span>)</span></h4>
-  
-  <div class="input-group">
-    <label>Dam Type:</label>
-    <span id="damType" style="width: 110px; font-weight: 600;">--</span>
-  </div>
+  <div class="widget-container">
+    <h4><span id="damName">Select a Dam</span> <br><span class="header-id">NID: <span id="nidId">--</span></span></h4>
+    
+    <div class="tab-bar">
+      <button class="tab-button active" onclick="switchTab(event, 'tab-outflow')">Peak Outflow</button>
+      <button class="tab-button" onclick="switchTab(event, 'tab-routing')">Routing</button>
+    </div>
 
-  <div class="input-group">
-    <label>Height Source:</label>
-    <select id="heightSelector">
-      <option value="hydraulic">Hydraulic</option>
-      <option value="structural">Structural</option>
-      <option value="nid_height">NID Height</option>
-    </select>
-  </div>
+    <div id="tab-outflow" class="tab-content active">
+      <div class="input-group">
+        <label>Dam Type:</label>
+        <span id="damType" style="width: 110px; font-weight: 600;">--</span>
+      </div>
+      <div class="input-group">
+        <label>Height Source:</label>
+        <select id="heightSelector">
+          <option value="hydraulic">Hydraulic</option>
+          <option value="structural">Structural</option>
+          <option value="nid_height">NID Height</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Head (ft):</label>
+        <input type="number" id="heightInput" step="0.1">
+      </div>
+      <div class="input-group">
+        <label>Volume (ac-ft):</label>
+        <input type="number" id="volumeInput" step="1">
+      </div>
 
-  <div class="input-group">
-    <label>Head (ft):</label>
-    <input type="number" id="heightInput" step="0.1">
-  </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Peak Outflow (cfs)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="highlight">
+            <td>Froehlich</td>
+            <td id="froehlichQ">--</td>
+          </tr>
+          <tr>
+            <td>SMPDBK</td>
+            <td id="smpdbkQ">--</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-  <div class="input-group">
-    <label>Volume (ac-ft):</label>
-    <input type="number" id="volumeInput" step="1">
-  </div>
+    <div id="tab-routing" class="tab-content">
+      <div style="font-size: 0.85em; color: #555; text-align: center; padding: 20px 0;">
+        <em>Routing logic and Downstream POI distance inputs will go here.</em>
+      </div>
+    </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Method</th>
-        <th>Peak Outflow (cfs)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="highlight">
-        <td>Froehlich</td>
-        <td id="froehlichQ">--</td>
-      </tr>
-      <tr>
-        <td>SMPDBK</td>
-        <td id="smpdbkQ">--</td>
-      </tr>
-    </tbody>
-  </table>
+  </div>
 
   <script>
-    // 1. Get URL parameters (Now including name and NIDID)
+    // --- UI Logic: Tab Switching ---
+    function switchTab(evt, tabId) {
+      // Hide all tab contents
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(c => c.classList.remove('active'));
+      
+      // Remove 'active' styling from all buttons
+      const buttons = document.querySelectorAll('.tab-button');
+      buttons.forEach(b => b.classList.remove('active'));
+      
+      // Show the targeted tab and highlight the clicked button
+      document.getElementById(tabId).classList.add('active');
+      evt.currentTarget.classList.add('active');
+    }
+
+    // --- Data Logic: URL Parameters ---
     const params = new URLSearchParams(window.location.search);
     
     const damNameParam = params.get('name') || 'Select a Dam';
     const nidIdParam = params.get('nidid') || '--';
+    const damTypeParam = params.get('type') || '--';
+    const volumeParam = parseFloat(params.get('volume')) || 0;
     
     const heights = {
       hydraulic: parseFloat(params.get('hydraulic')) || 0,
       structural: parseFloat(params.get('structural')) || 0,
       nid_height: parseFloat(params.get('nid_height')) || 0
     };
-    
-    const volumeParam = parseFloat(params.get('volume')) || 0;
-    const damTypeParam = params.get('type') || '--';
 
-    // 2. Populate the UI elements
+    // --- Data Logic: Populate UI ---
     document.getElementById('damName').innerText = damNameParam;
     document.getElementById('nidId').innerText = nidIdParam;
     document.getElementById('damType').innerText = damTypeParam;
-    
     document.getElementById('heightInput').value = heights.hydraulic;
     document.getElementById('volumeInput').value = volumeParam;
 
-    // 3. Calculation Logic
+    // --- Math Logic: Outflow Calculations ---
     function calculateQ() {
       const h = parseFloat(document.getElementById('heightInput').value) || 0;
       const v = parseFloat(document.getElementById('volumeInput').value) || 0;
@@ -98,7 +138,7 @@
         const froehlichQ = 60.7 * Math.pow(v, 0.295) * Math.pow(h, 1.24);
         document.getElementById('froehlichQ').innerText = froehlichQ.toLocaleString('en-US', {maximumFractionDigits: 0});
         
-        // SMPDBK (Assuming Br = 3*Hw)
+        // SMPDBK
         const breachWidth = 3 * h; 
         const smpdbkQ = 3.1 * breachWidth * Math.pow(h, 1.5);
         document.getElementById('smpdbkQ').innerText = smpdbkQ.toLocaleString('en-US', {maximumFractionDigits: 0});
@@ -108,15 +148,15 @@
       }
     }
 
-    // 4. Interactive Event Listeners
+    // --- Event Listeners ---
     document.getElementById('heightSelector').addEventListener('change', function(e) {
       document.getElementById('heightInput').value = heights[e.target.value];
       calculateQ();
     });
-
     document.getElementById('heightInput').addEventListener('input', calculateQ);
     document.getElementById('volumeInput').addEventListener('input', calculateQ);
 
+    // Initial run
     calculateQ();
   </script>
 </body>
