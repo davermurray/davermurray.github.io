@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>Dam Break Analysis</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* Global Reset & Container */
     body { font-family: 'Avenir Next', 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; display: flex; justify-content: center; }
-    .widget-container { background: #fff; width: 100%; max-width: 400px; padding: 12px; box-sizing: border-box; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .widget-container { background: #fff; width: 100%; max-width: 440px; padding: 12px; box-sizing: border-box; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     
     /* Header */
     h4 { margin: 0 0 10px 0; font-size: 1.1em; color: #005e95; text-align: center; }
@@ -24,11 +25,16 @@
     /* Inputs & Tables (Condensed) */
     .input-group { margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 0.85em; }
     label { font-weight: 600; color: #555; }
-    select, input { padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; width: 110px; font-size: 0.95em; }
-    table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 0.85em; }
-    th, td { border: 1px solid #e0e0e0; padding: 6px 8px; text-align: left; }
+    select, input { padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; width: 110px; font-size: 0.95em; box-sizing: border-box;}
+    
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 0.8em; }
+    th, td { border: 1px solid #e0e0e0; padding: 5px 4px; text-align: center; }
+    th:first-child, td:first-child { text-align: left; }
     th { background-color: #f8f9fa; font-weight: 600; }
     .highlight { background-color: #e8f5e9; font-weight: bold; color: #2e7d32; }
+
+    /* Chart Container */
+    .chart-container { position: relative; height: 220px; width: 100%; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -45,6 +51,13 @@
       <div class="input-group">
         <label>Dam Type:</label>
         <span id="damType" style="width: 110px; font-weight: 600;">--</span>
+      </div>
+      <div class="input-group">
+        <label>Failure Mode:</label>
+        <select id="failureMode">
+          <option value="Overtopping">Overtopping</option>
+          <option value="Piping">Piping</option>
+        </select>
       </div>
       <div class="input-group">
         <label>Height Source:</label>
@@ -67,16 +80,22 @@
         <thead>
           <tr>
             <th>Method</th>
-            <th>Peak Outflow (cfs)</th>
+            <th>Width (ft)</th>
+            <th>Time (min)</th>
+            <th>Peak Q (cfs)</th>
           </tr>
         </thead>
         <tbody>
           <tr class="highlight">
             <td>Froehlich</td>
+            <td id="froehlichW">--</td>
+            <td id="froehlichT">--</td>
             <td id="froehlichQ">--</td>
           </tr>
           <tr>
             <td>SMPDBK</td>
+            <td id="smpdbkW">--</td>
+            <td id="smpdbkT">--</td>
             <td id="smpdbkQ">--</td>
           </tr>
         </tbody>
@@ -84,80 +103,172 @@
     </div>
 
     <div id="tab-routing" class="tab-content">
-      <div style="font-size: 0.85em; color: #555; text-align: center; padding: 20px 0;">
-        <em>Routing logic and Downstream POI distance inputs will go here.</em>
+      <div class="input-group">
+        <label>Max Distance (mi):</label>
+        <input type="number" id="distanceInput" value="10" step="1">
+      </div>
+      
+      <div class="chart-container">
+        <canvas id="routingChart"></canvas>
       </div>
     </div>
 
   </div>
 
   <script>
+    let myChart = null; // Global chart instance
+
     // --- UI Logic: Tab Switching ---
     function switchTab(evt, tabId) {
-      // Hide all tab contents
       const contents = document.querySelectorAll('.tab-content');
       contents.forEach(c => c.classList.remove('active'));
-      
-      // Remove 'active' styling from all buttons
       const buttons = document.querySelectorAll('.tab-button');
       buttons.forEach(b => b.classList.remove('active'));
-      
-      // Show the targeted tab and highlight the clicked button
       document.getElementById(tabId).classList.add('active');
       evt.currentTarget.classList.add('active');
     }
 
     // --- Data Logic: URL Parameters ---
     const params = new URLSearchParams(window.location.search);
+    document.getElementById('damName').innerText = params.get('name') || 'Select a Dam';
+    document.getElementById('nidId').innerText = params.get('nidid') || '--';
     
-    const damNameParam = params.get('name') || 'Select a Dam';
-    const nidIdParam = params.get('nidid') || '--';
-    const damTypeParam = params.get('type') || '--';
-    const volumeParam = parseFloat(params.get('volume')) || 0;
+    const damTypeStr = (params.get('type') || '--').toLowerCase();
+    document.getElementById('damType').innerText = params.get('type') || '--';
     
     const heights = {
       hydraulic: parseFloat(params.get('hydraulic')) || 0,
       structural: parseFloat(params.get('structural')) || 0,
       nid_height: parseFloat(params.get('nid_height')) || 0
     };
-
-    // --- Data Logic: Populate UI ---
-    document.getElementById('damName').innerText = damNameParam;
-    document.getElementById('nidId').innerText = nidIdParam;
-    document.getElementById('damType').innerText = damTypeParam;
+    
     document.getElementById('heightInput').value = heights.hydraulic;
-    document.getElementById('volumeInput').value = volumeParam;
+    document.getElementById('volumeInput').value = parseFloat(params.get('volume')) || 0;
 
-    // --- Math Logic: Outflow Calculations ---
-    function calculateQ() {
+    // --- Math & Plotting Logic ---
+    function calculateAndPlot() {
       const h = parseFloat(document.getElementById('heightInput').value) || 0;
       const v = parseFloat(document.getElementById('volumeInput').value) || 0;
+      const failureMode = document.getElementById('failureMode').value;
+      const maxDist = parseFloat(document.getElementById('distanceInput').value) || 10;
 
+      let froehlichQ = 0;
+      let smpdbkQ = 0;
+
+      // 1. Calculate Peak Outflows
       if (h > 0 && v > 0) {
-        // Froehlich
-        const froehlichQ = 60.7 * Math.pow(v, 0.295) * Math.pow(h, 1.24);
+        const Dv_m3 = v * 1233.48;
+        const Dh_m = h * 0.3048;
+
+        // Froehlich Logic
+        const K = (failureMode === "Piping") ? 1.0 : 1.4;
+        const Bf = 3.28 * (0.1803 * (K * Math.pow(Dv_m3, 0.32) * Math.pow(Dh_m, 0.19)));
+        const Tf_froehlich = 0.00254 * Math.pow(Dv_m3, 0.53) * Math.pow(Dh_m, -0.90) * 60;
+        froehlichQ = 60.7 * Math.pow(v, 0.295) * Math.pow(h, 1.24);
+
+        // SMPDBK Logic
+        let bw_mult = 3; 
+        let tf_div = 10; 
+        if (damTypeStr.includes("arch")) { bw_mult = 0.9; tf_div = 50; } 
+        else if (damTypeStr.includes("gravity") || damTypeStr.includes("concrete") || damTypeStr.includes("masonry")) { bw_mult = 5; tf_div = 40; }
+
+        const Bm = bw_mult * h; 
+        const Tf_smpdbk = h / tf_div;
+        const Dsa_ac = (2 * v) / h; 
+        const smpdbk_const = (23.4 * Dsa_ac) / Bm;
+        smpdbkQ = (3.1 * Bm) * Math.pow((smpdbk_const / ((Tf_smpdbk / 60) + smpdbk_const / Math.pow(h, 0.5))), 3.0);
+
+        // Update Table
+        document.getElementById('froehlichW').innerText = Bf.toLocaleString('en-US', {maximumFractionDigits: 1});
+        document.getElementById('froehlichT').innerText = Tf_froehlich.toLocaleString('en-US', {maximumFractionDigits: 1});
         document.getElementById('froehlichQ').innerText = froehlichQ.toLocaleString('en-US', {maximumFractionDigits: 0});
-        
-        // SMPDBK
-        const breachWidth = 3 * h; 
-        const smpdbkQ = 3.1 * breachWidth * Math.pow(h, 1.5);
+        document.getElementById('smpdbkW').innerText = Bm.toLocaleString('en-US', {maximumFractionDigits: 1});
+        document.getElementById('smpdbkT').innerText = Tf_smpdbk.toLocaleString('en-US', {maximumFractionDigits: 1});
         document.getElementById('smpdbkQ').innerText = smpdbkQ.toLocaleString('en-US', {maximumFractionDigits: 0});
       } else {
-        document.getElementById('froehlichQ').innerText = '--';
-        document.getElementById('smpdbkQ').innerText = '--';
+        ['froehlichW','froehlichT','froehlichQ','smpdbkW','smpdbkT','smpdbkQ'].forEach(id => document.getElementById(id).innerText = '--');
       }
+
+      // 2. Generate Routing Data for the Chart
+      const labels = [];
+      const dataF = [];
+      const dataS = [];
+      
+      // Create 10 data points along the user's defined max distance
+      const step = maxDist / 10;
+      
+      for (let x = 0; x <= maxDist; x += step) {
+        labels.push(x.toFixed(1));
+        
+        // --- REPLACE THIS WITH YOUR APP.PY ROUTING MATH ---
+        // Currently using a placeholder exponential decay logic
+        const routedFroehlich = froehlichQ * Math.exp(-0.05 * x);
+        const routedSmpdbk = smpdbkQ * Math.exp(-0.05 * x);
+        // --------------------------------------------------
+
+        dataF.push(routedFroehlich);
+        dataS.push(routedSmpdbk);
+      }
+
+      // 3. Render / Update the Chart
+      const ctx = document.getElementById('routingChart').getContext('2d');
+      
+      if (myChart) {
+        myChart.destroy(); // Clear the old chart before drawing a new one
+      }
+      
+      myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Froehlich (cfs)',
+              data: dataF,
+              borderColor: '#2e7d32', // Green
+              backgroundColor: 'rgba(46, 125, 50, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: 'SMPDBK (cfs)',
+              data: dataS,
+              borderColor: '#005e95', // Blue
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              borderDash: [5, 5], // Dashed line to differentiate
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: { title: { display: true, text: 'Distance (mi)', font: {size: 11} }, ticks: {font: {size: 10}} },
+            y: { title: { display: true, text: 'Discharge (cfs)', font: {size: 11} }, ticks: {font: {size: 10}}, beginAtZero: true }
+          },
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: {size: 10} } }
+          }
+        }
+      });
     }
 
     // --- Event Listeners ---
     document.getElementById('heightSelector').addEventListener('change', function(e) {
       document.getElementById('heightInput').value = heights[e.target.value];
-      calculateQ();
+      calculateAndPlot();
     });
-    document.getElementById('heightInput').addEventListener('input', calculateQ);
-    document.getElementById('volumeInput').addEventListener('input', calculateQ);
+    
+    // Recalculate and Re-plot on any input change
+    const inputs = ['failureMode', 'heightInput', 'volumeInput', 'distanceInput'];
+    inputs.forEach(id => document.getElementById(id).addEventListener('input', calculateAndPlot));
 
     // Initial run
-    calculateQ();
+    calculateAndPlot();
   </script>
 </body>
 </html>
