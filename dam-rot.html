@@ -144,6 +144,7 @@
     // Handle Dam Type Dropdown Logic
     const rawType = (getCleanParam('type') || "").toLowerCase();
     const typeSelector = document.getElementById('typeSelector');
+    document.getElementById('damType').innerText = rawType || '--';
     
     if (rawType.includes("arch")) {
         typeSelector.value = "arch";
@@ -174,20 +175,8 @@
             myChart = null;
         }
     }
-    const damTypeStr = (params.get('type') || '--').toLowerCase();
-    document.getElementById('damType').innerText = params.get('type') || '--';
-    
-    const heights = {
-      hydraulic: parseFloat(params.get('hydraulic')) || 0,
-      structural: parseFloat(params.get('structural')) || 0,
-      nid_height: parseFloat(params.get('nid_height')) || 0
-    };
-    
-    document.getElementById('heightInput').value = heights.hydraulic || "";
-    document.getElementById('volumeInput').value = parseFloat(params.get('volume')) || "";
-        
+   
     // --- Math & Plotting Logic ---
-   // --- Updated Math Logic with Dropdown Filters ---
 function calculateAndPlot() {
     const h = parseFloat(document.getElementById('heightInput').value) || 0;
     const v = parseFloat(document.getElementById('volumeInput').value) || 0;
@@ -208,8 +197,6 @@ function calculateAndPlot() {
         bw_mult = 3;
         tf_div = 10;
     }
-    
-    // ... rest of your calculation logic using bw_mult and tf_div ...
 }
       if (h <= 0 || v <= 0) {
         ['froehlichW','froehlichT','froehlichQ','smpdbkW','smpdbkT','smpdbkQ'].forEach(id => {
