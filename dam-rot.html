@@ -165,7 +165,7 @@
     };
     const vVal = parseFloat(getCleanParam('volume')) || 0;
 
-    document.getElementById('heightInput').value = heights.hydraulic || "";
+    document.getElementById('heightInput').value = heights.hydraulic || heights.nid_height || heights.structural || "";
     document.getElementById('volumeInput').value = vVal || "";
     
     // Only run calculations if we actually have a dam selected
