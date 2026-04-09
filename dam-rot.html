@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -164,6 +164,15 @@
     function calculateAndPlot() {
       const h = parseFloat(document.getElementById('heightInput').value) || 0;
       const v = parseFloat(document.getElementById('volumeInput').value) || 0;
+      
+      if (h <= 0 || v <= 0) {
+        ['froehlichW','froehlichT','froehlichQ','smpdbkW','smpdbkT','smpdbkQ'].forEach(id => {
+        document.getElementById(id).innerText = '--';
+        });
+      // Optional: Hide the chart canvas or show a message
+      return; 
+      }
+      
       const failureMode = document.getElementById('failureMode').value;
       const maxDist = parseFloat(document.getElementById('distanceInput').value) || 10;
 
