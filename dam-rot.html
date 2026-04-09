@@ -50,7 +50,11 @@
     <div id="tab-outflow" class="tab-content active">
       <div class="input-group">
         <label>Dam Type:</label>
-        <span id="damType" style="width: 110px; font-weight: 600;">--</span>
+      <select id="typeSelector">
+        <option value="earth">Earth / Rockfill</option>
+        <option value="concrete">Concrete / Gravity</option>
+        <option value="arch">Arch</option>
+    </select>
       </div>
       <div class="input-group">
         <label>Failure Mode:</label>
@@ -166,7 +170,7 @@
     document.getElementById('volumeInput').value = vVal || "";
     
     // Only run calculations if we actually have a dam selected
-    if (hVal > 0 && vVal > 0) {
+    if (heights.hydraulic > 0 && vVal > 0) {
         calculateAndPlot();
     } else {
         // Clear any existing chart data if no dam is selected
