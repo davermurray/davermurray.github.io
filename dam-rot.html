@@ -131,28 +131,38 @@
     // --- Data Logic: URL Parameters ---
     const params = new URLSearchParams(window.location.search);
     
-    // Function to check if the value is a real dam attribute or just an ESRI placeholder
     function getCleanParam(key) {
         const val = params.get(key);
-        // If val is null, empty, or literally contains "{", it's not real data
-        if (!val || val.includes('{') || val === 'null' || val === 'undefined') {
-            return null;
-        }
+        if (!val || val.includes('{') || val === 'null') return null;
         return val;
     }
     
-    const damName = getCleanParam('name') || "No Dam Selected";
-    const nidId = getCleanParam('nidid') || "Please select a dam on the map";
+    // Set Header Info
+    document.getElementById('damName').innerText = getCleanParam('name') || "No Dam Selected";
+    document.getElementById('nidId').innerText = getCleanParam('nidid') || "Please select a dam on the map";
     
-    document.getElementById('damName').innerText = damName;
-    document.getElementById('nidId').innerText = nidId;
+    // Handle Dam Type Dropdown Logic
+    const rawType = (getCleanParam('type') || "").toLowerCase();
+    const typeSelector = document.getElementById('typeSelector');
     
-    // Get numbers, default to 0 if null/invalid
-    const hVal = parseFloat(getCleanParam('hydraulic')) || 0;
+    if (rawType.includes("arch")) {
+        typeSelector.value = "arch";
+    } else if (rawType.includes("concrete") || rawType.includes("gravity") || rawType.includes("masonry")) {
+        typeSelector.value = "concrete";
+    } else {
+        typeSelector.value = "earth"; // Default for NID "Earth" or "Embankment"
+    }
+
+    // Capture heights and storage
+    const heights = {
+        hydraulic: parseFloat(getCleanParam('hydraulic')) || 0,
+        structural: parseFloat(getCleanParam('structural')) || 0,
+        nid_height: parseFloat(getCleanParam('nid_height')) || 0
+    };
     const vVal = parseFloat(getCleanParam('volume')) || 0;
-    
-    document.getElementById('heightInput').value = hVal > 0 ? hVal : "";
-    document.getElementById('volumeInput').value = vVal > 0 ? vVal : "";
+
+    document.getElementById('heightInput').value = heights.hydraulic || "";
+    document.getElementById('volumeInput').value = vVal || "";
     
     // Only run calculations if we actually have a dam selected
     if (hVal > 0 && vVal > 0) {
@@ -177,10 +187,30 @@
     document.getElementById('volumeInput').value = parseFloat(params.get('volume')) || "";
         
     // --- Math & Plotting Logic ---
-    function calculateAndPlot() {
-      const h = parseFloat(document.getElementById('heightInput').value) || 0;
-      const v = parseFloat(document.getElementById('volumeInput').value) || 0;
-      
+   // --- Updated Math Logic with Dropdown Filters ---
+function calculateAndPlot() {
+    const h = parseFloat(document.getElementById('heightInput').value) || 0;
+    const v = parseFloat(document.getElementById('volumeInput').value) || 0;
+    const selectedType = document.getElementById('typeSelector').value; // Get value from dropdown
+
+    let bw_mult = 3; 
+    let tf_div = 10;
+
+    // Filter coefficients based on the dropdown selection
+    if (selectedType === "arch") {
+        bw_mult = 0.9;
+        tf_div = 50;
+    } else if (selectedType === "concrete") {
+        bw_mult = 5;
+        tf_div = 40;
+    } else {
+        // Default/Earth
+        bw_mult = 3;
+        tf_div = 10;
+    }
+    
+    // ... rest of your calculation logic using bw_mult and tf_div ...
+}
       if (h <= 0 || v <= 0) {
         ['froehlichW','froehlichT','froehlichQ','smpdbkW','smpdbkT','smpdbkQ'].forEach(id => {
         document.getElementById(id).innerText = '--';
@@ -304,9 +334,9 @@
     });
     
     // Recalculate and Re-plot on any input change
-    const inputs = ['failureMode', 'heightInput', 'volumeInput', 'distanceInput'];
-    inputs.forEach(id => document.getElementById(id).addEventListener('input', calculateAndPlot));
-
+    const inputs = ['typeSelector', 'failureMode', 'heightInput', 'volumeInput', 'distanceInput'];
+    inputs.forEach(id => document.getElementById(id).addEventListener('change', calculateAndPlot));
+    
     // Initial run
     calculateAndPlot();
   </script>
