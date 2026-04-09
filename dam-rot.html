@@ -148,8 +148,7 @@
     // Handle Dam Type Dropdown Logic
     const rawType = (getCleanParam('type') || "").toLowerCase();
     const typeSelector = document.getElementById('typeSelector');
-    document.getElementById('damType').innerText = rawType || '--';
-    
+       
     if (rawType.includes("arch")) {
         typeSelector.value = "arch";
     } else if (rawType.includes("concrete") || rawType.includes("gravity") || rawType.includes("masonry")) {
