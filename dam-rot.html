@@ -184,71 +184,49 @@
 function calculateAndPlot() {
     const h = parseFloat(document.getElementById('heightInput').value) || 0;
     const v = parseFloat(document.getElementById('volumeInput').value) || 0;
-    const selectedType = document.getElementById('typeSelector').value; // Get value from dropdown
+    const selectedType = document.getElementById('typeSelector').value;
+    const failureMode = document.getElementById('failureMode').value;
+    const maxDist = parseFloat(document.getElementById('distanceInput').value) || 10;
 
-    let bw_mult = 3; 
-    let tf_div = 10;
-
-    // Filter coefficients based on the dropdown selection
-    if (selectedType === "arch") {
-        bw_mult = 0.9;
-        tf_div = 50;
-    } else if (selectedType === "concrete") {
-        bw_mult = 5;
-        tf_div = 40;
-    } else {
-        // Default/Earth
-        bw_mult = 3;
-        tf_div = 10;
+    // 1. Guard Clause: Stop if no data
+    if (h <= 0 || v <= 0) {
+        ['froehlichW','froehlichT','froehlichQ','smpdbkW','smpdbkT','smpdbkQ'].forEach(id => {
+            document.getElementById(id).innerText = '--';
+        });
+        return;
     }
 
-      if (h <= 0 || v <= 0) {
-        ['froehlichW','froehlichT','froehlichQ','smpdbkW','smpdbkT','smpdbkQ'].forEach(id => {
-        document.getElementById(id).innerText = '--';
-        });
-      // Optional: Hide the chart canvas or show a message
-      return; 
-      }
-      
-      const failureMode = document.getElementById('failureMode').value;
-      const maxDist = parseFloat(document.getElementById('distanceInput').value) || 10;
+    // 2. Set Coefficients based on Dropdown
+    let bw_mult = 3; 
+    let tf_div = 10;
+    if (selectedType === "arch") { bw_mult = 0.9; tf_div = 50; }
+    else if (selectedType === "concrete") { bw_mult = 5; tf_div = 40; }
 
-      let froehlichQ = 0;
-      let smpdbkQ = 0;
+    // 3. Froehlich Calculations
+    const Dv_m3 = v * 1233.48;
+    const Dh_m = h * 0.3048;
+    const K = (failureMode === "Piping") ? 1.0 : 1.4;
+    const Bf = 3.28 * (0.1803 * (K * Math.pow(Dv_m3, 0.32) * Math.pow(Dh_m, 0.19)));
+    const Tf_froehlich = 0.00254 * Math.pow(Dv_m3, 0.53) * Math.pow(Dh_m, -0.90) * 60;
+    const froehlichQ = 60.7 * Math.pow(v, 0.295) * Math.pow(h, 1.24);
 
-      // 1. Calculate Peak Outflows
-      if (h > 0 && v > 0) {
-        const Dv_m3 = v * 1233.48;
-        const Dh_m = h * 0.3048;
+    // 4. SMPDBK Calculations
+    const Bm = bw_mult * h;
+    const Tf_smpdbk = h / tf_div;
+    const Dsa_ac = (2 * v) / h;
+    const smpdbk_const = (23.4 * Dsa_ac) / Bm;
+    const smpdbkQ = (3.1 * Bm) * Math.pow((smpdbk_const / ((Tf_smpdbk / 60) + smpdbk_const / Math.pow(h, 0.5))), 3.0);
 
-        // Froehlich Logic
-        const K = (failureMode === "Piping") ? 1.0 : 1.4;
-        const Bf = 3.28 * (0.1803 * (K * Math.pow(Dv_m3, 0.32) * Math.pow(Dh_m, 0.19)));
-        const Tf_froehlich = 0.00254 * Math.pow(Dv_m3, 0.53) * Math.pow(Dh_m, -0.90) * 60;
-        froehlichQ = 60.7 * Math.pow(v, 0.295) * Math.pow(h, 1.24);
+    // 5. Update Table Results
+    document.getElementById('froehlichW').innerText = Bf.toLocaleString('en-US', {maximumFractionDigits: 1});
+    document.getElementById('froehlichT').innerText = Tf_froehlich.toLocaleString('en-US', {maximumFractionDigits: 1});
+    document.getElementById('froehlichQ').innerText = froehlichQ.toLocaleString('en-US', {maximumFractionDigits: 0});
+    document.getElementById('smpdbkW').innerText = Bm.toLocaleString('en-US', {maximumFractionDigits: 1});
+    document.getElementById('smpdbkT').innerText = Tf_smpdbk.toLocaleString('en-US', {maximumFractionDigits: 1});
+    document.getElementById('smpdbkQ').innerText = smpdbkQ.toLocaleString('en-US', {maximumFractionDigits: 0});
 
-        // SMPDBK Logic
-        let bw_mult = 3; 
-        let tf_div = 10; 
-        if (damTypeStr.includes("arch")) { bw_mult = 0.9; tf_div = 50; } 
-        else if (damTypeStr.includes("gravity") || damTypeStr.includes("concrete") || damTypeStr.includes("masonry")) { bw_mult = 5; tf_div = 40; }
-
-        const Bm = bw_mult * h; 
-        const Tf_smpdbk = h / tf_div;
-        const Dsa_ac = (2 * v) / h; 
-        const smpdbk_const = (23.4 * Dsa_ac) / Bm;
-        smpdbkQ = (3.1 * Bm) * Math.pow((smpdbk_const / ((Tf_smpdbk / 60) + smpdbk_const / Math.pow(h, 0.5))), 3.0);
-
-        // Update Table
-        document.getElementById('froehlichW').innerText = Bf.toLocaleString('en-US', {maximumFractionDigits: 1});
-        document.getElementById('froehlichT').innerText = Tf_froehlich.toLocaleString('en-US', {maximumFractionDigits: 1});
-        document.getElementById('froehlichQ').innerText = froehlichQ.toLocaleString('en-US', {maximumFractionDigits: 0});
-        document.getElementById('smpdbkW').innerText = Bm.toLocaleString('en-US', {maximumFractionDigits: 1});
-        document.getElementById('smpdbkT').innerText = Tf_smpdbk.toLocaleString('en-US', {maximumFractionDigits: 1});
-        document.getElementById('smpdbkQ').innerText = smpdbkQ.toLocaleString('en-US', {maximumFractionDigits: 0});
-      } else {
-        ['froehlichW','froehlichT','froehlichQ','smpdbkW','smpdbkT','smpdbkQ'].forEach(id => document.getElementById(id).innerText = '--');
-      }
+    // 6. Trigger Chart Update
+    updateChart(froehlichQ, smpdbkQ, maxDist);
 
       // 2. Generate Routing Data for the Chart
       const labels = [];
