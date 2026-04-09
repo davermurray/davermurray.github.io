@@ -169,7 +169,7 @@
     document.getElementById('volumeInput').value = vVal || "";
     
     // Only run calculations if we actually have a dam selected
-    if (heights.hydraulic > 0 && vVal > 0) {
+    if ((heights.hydraulic > 0 || heights.nid_height > 0 || heights.structural > 0) && vVal > 0){
         calculateAndPlot();
     } else {
         // Clear any existing chart data if no dam is selected
