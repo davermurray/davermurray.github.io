@@ -60,7 +60,7 @@
         </select>
       </div>
       <div class="input-group">
-        <label>Height Source:</label>
+        <label>NID Height Source:</label>
         <select id="heightSelector">
           <option value="hydraulic">Hydraulic</option>
           <option value="structural">Structural</option>
@@ -86,7 +86,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr class="highlight">
+          <tr>
             <td>Froehlich</td>
             <td id="froehlichW">--</td>
             <td id="froehlichT">--</td>
@@ -131,23 +131,39 @@
     // --- Data Logic: URL Parameters ---
     const params = new URLSearchParams(window.location.search);
     
-    // Helper to check if a parameter is truly present and not just a placeholder like {NAME}
-    function isValid(param) {
-      return param && !param.startsWith('{') && param !== 'null' && param !== '';
+    // Function to check if the value is a real dam attribute or just an ESRI placeholder
+    function getCleanParam(key) {
+        const val = params.get(key);
+        // If val is null, empty, or literally contains "{", it's not real data
+        if (!val || val.includes('{') || val === 'null' || val === 'undefined') {
+            return null;
+        }
+        return val;
     }
     
-    const rawName = params.get('name');
-    const rawNid = params.get('nidid');
+    const damName = getCleanParam('name') || "No Dam Selected";
+    const nidId = getCleanParam('nidid') || "Please select a dam on the map";
     
-    // If name or NID is missing, show a friendlier "Waiting" state
-    if (!isValid(rawName) || !isValid(rawNid)) {
-      document.getElementById('damName').innerText = "Waiting for Map Selection...";
-      document.getElementById('nidId').innerText = "Please select a dam on the map";
+    document.getElementById('damName').innerText = damName;
+    document.getElementById('nidId').innerText = nidId;
+    
+    // Get numbers, default to 0 if null/invalid
+    const hVal = parseFloat(getCleanParam('hydraulic')) || 0;
+    const vVal = parseFloat(getCleanParam('volume')) || 0;
+    
+    document.getElementById('heightInput').value = hVal > 0 ? hVal : "";
+    document.getElementById('volumeInput').value = vVal > 0 ? vVal : "";
+    
+    // Only run calculations if we actually have a dam selected
+    if (hVal > 0 && vVal > 0) {
+        calculateAndPlot();
     } else {
-      document.getElementById('damName').innerText = rawName;
-      document.getElementById('nidId').innerText = rawNid;
+        // Clear any existing chart data if no dam is selected
+        if (myChart) {
+            myChart.destroy();
+            myChart = null;
+        }
     }
-    
     const damTypeStr = (params.get('type') || '--').toLowerCase();
     document.getElementById('damType').innerText = params.get('type') || '--';
     
