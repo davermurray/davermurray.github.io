@@ -130,8 +130,23 @@
 
     // --- Data Logic: URL Parameters ---
     const params = new URLSearchParams(window.location.search);
-    document.getElementById('damName').innerText = params.get('name') || 'Select a Dam';
-    document.getElementById('nidId').innerText = params.get('nidid') || '--';
+    
+    // Helper to check if a parameter is truly present and not just a placeholder like {NAME}
+    function isValid(param) {
+      return param && !param.startsWith('{') && param !== 'null' && param !== '';
+    }
+    
+    const rawName = params.get('name');
+    const rawNid = params.get('nidid');
+    
+    // If name or NID is missing, show a friendlier "Waiting" state
+    if (!isValid(rawName) || !isValid(rawNid)) {
+      document.getElementById('damName').innerText = "Waiting for Map Selection...";
+      document.getElementById('nidId').innerText = "Please select a dam on the map";
+    } else {
+      document.getElementById('damName').innerText = rawName;
+      document.getElementById('nidId').innerText = rawNid;
+    }
     
     const damTypeStr = (params.get('type') || '--').toLowerCase();
     document.getElementById('damType').innerText = params.get('type') || '--';
@@ -142,9 +157,9 @@
       nid_height: parseFloat(params.get('nid_height')) || 0
     };
     
-    document.getElementById('heightInput').value = heights.hydraulic;
-    document.getElementById('volumeInput').value = parseFloat(params.get('volume')) || 0;
-
+    document.getElementById('heightInput').value = heights.hydraulic || "";
+    document.getElementById('volumeInput').value = parseFloat(params.get('volume')) || "";
+        
     // --- Math & Plotting Logic ---
     function calculateAndPlot() {
       const h = parseFloat(document.getElementById('heightInput').value) || 0;
