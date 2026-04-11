@@ -128,19 +128,42 @@
     let routingChart = null;
     const params = new URLSearchParams(window.location.search);
 
-    document.getElementById('damName').innerText = params.get('name') || "Selected Dam";
-    document.getElementById('nidId').innerText = "NID: " + (params.get('nidid') || "N/A");
+    // --- SAFETY CHECK FUNCTIONS ---
+    function getSafeStr(paramName, defaultStr = "--") {
+        let val = params.get(paramName);
+        if (!val || val === "null" || val.trim() === "") return defaultStr;
+        return val;
+    }
+
+    function getSafeNum(...paramNames) {
+        for (let p of paramNames) {
+            let val = params.get(p);
+            if (val && val !== "null" && val.trim() !== "") {
+                let num = parseFloat(val);
+                if (!isNaN(num)) return num;
+            }
+        }
+        return 0; // default to 0 if all params are empty/null
+    }
+    // ------------------------------
+
+    // Apply safe defaults on load
+    document.getElementById('damName').innerText = getSafeStr('name', 'Selected Dam');
+    document.getElementById('nidId').innerText = "NID: " + getSafeStr('nidid', '--');
     
-    document.getElementById('heightInput').value = params.get('hydraulic') || params.get('nid_height') || params.get('structural') || 0;
-    document.getElementById('storageInput').value = params.get('normal_storage') || params.get('max_storage') || 0;
+    // Checks hydraulic first, then nid_height, then structural. Defaults to 0 if all missing.
+    document.getElementById('heightInput').value = getSafeNum('hydraulic', 'nid_height', 'structural');
+    
+    // Checks normal_storage first, then max_storage. Defaults to 0 if all missing.
+    document.getElementById('storageInput').value = getSafeNum('normal_storage', 'max_storage');
 
     function applySource(type) {
         if (type === 'height') {
             const field = document.getElementById('heightSource').value;
-            if (field) document.getElementById('heightInput').value = params.get(field) || 0;
+            if (field) document.getElementById('heightInput').value = getSafeNum(field);
         } else {
             const field = document.getElementById('storageSource').value;
-            if (field) document.getElementById('storageInput').value = params.get(field) || 0;
+            if (field) document.getElementById('storageInput').value = getSafeNum(field);
         }
         calculateAll();
     }
@@ -153,7 +176,21 @@
         const n = parseFloat(document.getElementById('nInput').value) || 0.05;
         const type = document.getElementById('typeSelector').value;
 
-        if (h <= 0 || v <= 0) return;
+        // Clear display if core values are missing/zero
+        if (h <= 0 || v <= 0) {
+            document.getElementById('froBw').innerText = "--";
+            document.getElementById('froTc').innerText = "--";
+            document.getElementById('froQ').innerText = "--";
+            document.getElementById('smpBw').innerText = "--";
+            document.getElementById('smpTc').innerText = "--";
+            document.getElementById('smpQ').innerText = "--";
+            document.getElementById('fread_val').innerText = "--";
+            document.getElementById('ohd_val').innerText = "--";
+            document.getElementById('travel_time').innerText = "--";
+            if (routingChart) routingChart.data.datasets.forEach(ds => ds.data = []);
+            if (routingChart) routingChart.update();
+            return;
+        }
 
         // Froehlich Math
         const froBw = 9.5 * Math.pow(v, 0.25) * Math.pow(h, 0.5);
