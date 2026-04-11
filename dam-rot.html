@@ -54,7 +54,7 @@
         <input type="number" id="storageInput" oninput="calculateAll()">
         <select id="storageSource" class="source-select" onchange="applySource('storage')">
             <option value="">-- Change Storage Source --</option>
-            <option value="volume">Max Storage</option>
+            <option value="max_storage">Max Storage</option>
             <option value="normal_storage">Normal Storage</option>
         </select>
     </div>
@@ -132,7 +132,7 @@
     document.getElementById('nidId').innerText = "NID: " + (params.get('nidid') || "N/A");
     
     document.getElementById('heightInput').value = params.get('hydraulic') || params.get('nid_height') || params.get('structural') || 0;
-    document.getElementById('storageInput').value = params.get('volume') || params.get('normal_storage') || 0;
+    document.getElementById('storageInput').value = params.get('normal_storage') || params.get('max_storage') || 0;
 
     function applySource(type) {
         if (type === 'height') {
