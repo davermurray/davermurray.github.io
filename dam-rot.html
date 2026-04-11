@@ -54,6 +54,7 @@
         <input type="number" id="storageInput" oninput="calculateAll()">
         <select id="storageSource" class="source-select" onchange="applySource('storage')">
             <option value="">-- Change Storage Source --</option>
+            <option value="nid_storage">NID Storage</option>
             <option value="max_storage">Max Storage</option>
             <option value="normal_storage">Normal Storage</option>
         </select>
@@ -100,11 +101,11 @@
     <div class="stats-grid" style="margin-top: 20px;">
         <div class="input-group" style="margin-bottom:0;">
             <label>Channel Slope (ft/mi)</label>
-            <input type="number" id="slopeInput" value="10.0" step="0.1" oninput="calculateAll()">
+            <input type="number" id="slopeInput" value="10.0" step="0.1" oninput="calculateVelocities()">
         </div>
         <div class="input-group" style="margin-bottom:0;">
             <label>Manning's n</label>
-            <input type="number" id="nInput" value="0.05" step="0.01" oninput="calculateAll()">
+            <input type="number" id="nInput" value="0.05" step="0.01" oninput="calculateVelocities()">
         </div>
     </div>
 
@@ -128,18 +129,15 @@
     let routingChart = null;
     const params = new URLSearchParams(window.location.search);
 
-   // --- SAFETY CHECK & MEMORY FUNCTIONS ---
+    // --- SAFETY CHECK & MEMORY FUNCTIONS ---
     let rawName = params.get('name');
-    // Detect if the user deselected (URL is empty or has curly braces)
     let isDeselected = (!rawName || rawName === "null" || rawName.trim() === "" || rawName.includes("{"));
 
     function getSafeStr(paramName, defaultStr = "--") {
         if (isDeselected) {
-            // We are deselected! Load the last viewed dam from memory.
             let memVal = sessionStorage.getItem('damrot_' + paramName);
             return (memVal && memVal !== "") ? memVal : defaultStr;
         } else {
-            // New dam clicked! Save its data to memory for later.
             let val = params.get(paramName);
             let cleanVal = (val && val !== "null" && val.trim() !== "") ? val : "";
             sessionStorage.setItem('damrot_' + paramName, cleanVal);
@@ -149,17 +147,16 @@
 
     function getSafeNum(...paramNames) {
         if (isDeselected) {
-            // We are deselected! Try to load the numbers from memory.
             for (let p of paramNames) {
                 let memVal = sessionStorage.getItem('damrot_' + p);
                 if (memVal && memVal !== "") {
-                    let num = parseFloat(memVal);
+                    // Strip commas before parsing
+                    let num = parseFloat(memVal.replace(/,/g, ''));
                     if (!isNaN(num)) return num;
                 }
             }
             return 0;
         } else {
-            // New dam clicked! Save all passed numbers to memory.
             let validNum = 0;
             let found = false;
             for (let p of paramNames) {
@@ -167,9 +164,9 @@
                 let cleanVal = (val && val !== "null" && val.trim() !== "") ? val : "";
                 sessionStorage.setItem('damrot_' + p, cleanVal);
                 
-                // Return the first valid number we find in the chain
                 if (!found && cleanVal !== "") {
-                    let num = parseFloat(cleanVal);
+                    // Strip commas before parsing
+                    let num = parseFloat(cleanVal.replace(/,/g, ''));
                     if (!isNaN(num)) {
                         validNum = num;
                         found = true;
@@ -182,15 +179,12 @@
     // ------------------------------
 
     // --- INITIAL DATA LOAD FROM URL ---
-    // 1. Strings
     document.getElementById('damName').innerText = getSafeStr('name', 'Selected Dam');
     document.getElementById('nidId').innerText = "NID: " + getSafeStr('nidid', '--');
     
-    // 2. Numbers
     document.getElementById('heightInput').value = getSafeNum('hydraulic', 'nid_height', 'structural');
-    document.getElementById('storageInput').value = getSafeNum('normal_storage', 'max_storage');
+    document.getElementById('storageInput').value = getSafeNum('nid_storage', 'normal_storage', 'max_storage');
 
-    // 3. Dam Type Mapping
     const rawType = getSafeStr('type', '').toLowerCase();
     const typeSel = document.getElementById('typeSelector');
     if (rawType.includes("arch")) {
@@ -198,7 +192,7 @@
     } else if (rawType.includes("concrete") || rawType.includes("gravity")) {
         typeSel.value = "concrete";
     } else {
-        typeSel.value = "earth"; // Earth is the default fallback
+        typeSel.value = "earth"; 
     }
     // ----------------------------------
 
@@ -213,15 +207,36 @@
         calculateAll();
     }
 
+    // Dedicated function for Velocities (does not touch the chart)
+    function calculateVelocities() {
+        const h = parseFloat(document.getElementById('heightInput').value) || 0;
+        const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
+        const slope = parseFloat(document.getElementById('slopeInput').value) || 10;
+        const n = parseFloat(document.getElementById('nInput').value) || 0.05;
+
+        if (h <= 0) {
+            document.getElementById('fread_val').innerText = "--";
+            document.getElementById('ohd_val').innerText = "--";
+            document.getElementById('travel_time').innerText = "--";
+            return;
+        }
+
+        const vFread = (0.005 / n) * Math.pow(h, (2/3)) * Math.pow(slope, 0.5);
+        const vOHD = 3 * Math.pow((h * 0.4), 0.33);
+        const travelTime = distMax / vFread;
+
+        document.getElementById('fread_val').innerText = vFread.toFixed(1) + " mph";
+        document.getElementById('ohd_val').innerText = vOHD.toFixed(1) + " mph";
+        document.getElementById('travel_time').innerText = travelTime.toFixed(1) + " hours";
+    }
+
+    // Core calculation function (updates math + chart, then calls velocities)
     function calculateAll() {
         const h = parseFloat(document.getElementById('heightInput').value) || 0;
         const v = parseFloat(document.getElementById('storageInput').value) || 0;
         const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
-        const slope = parseFloat(document.getElementById('slopeInput').value) || 10;
-        const n = parseFloat(document.getElementById('nInput').value) || 0.05;
         const type = document.getElementById('typeSelector').value;
 
-        // Clear display if core values are missing/zero
         if (h <= 0 || v <= 0) {
             document.getElementById('froBw').innerText = "--";
             document.getElementById('froTc').innerText = "--";
@@ -229,11 +244,9 @@
             document.getElementById('smpBw').innerText = "--";
             document.getElementById('smpTc').innerText = "--";
             document.getElementById('smpQ').innerText = "--";
-            document.getElementById('fread_val').innerText = "--";
-            document.getElementById('ohd_val').innerText = "--";
-            document.getElementById('travel_time').innerText = "--";
             if (routingChart) routingChart.data.datasets.forEach(ds => ds.data = []);
             if (routingChart) routingChart.update();
+            calculateVelocities(); // clears the velocities
             return;
         }
 
@@ -260,7 +273,7 @@
         document.getElementById('smpTc').innerText = smpTc.toFixed(1);
         document.getElementById('smpQ').innerText = Math.round(smpQ).toLocaleString();
 
-        // Routing Logic (Both Lines)
+        // Routing Logic
         let labels = [];
         let froData = [];
         let smpData = [];
@@ -271,16 +284,10 @@
             smpData.push(Math.pow(10, (Math.log10(smpQ) - 0.03 * m)).toFixed(0));
         }
 
-        // Velocities & Travel Time
-        const vFread = (0.005 / n) * Math.pow(h, (2/3)) * Math.pow(slope, 0.5);
-        const vOHD = 3 * Math.pow((h * 0.4), 0.33);
-        const travelTime = distMax / vFread;
-
-        document.getElementById('fread_val').innerText = vFread.toFixed(1) + " mph";
-        document.getElementById('ohd_val').innerText = vOHD.toFixed(1) + " mph";
-        document.getElementById('travel_time').innerText = travelTime.toFixed(1) + " hours";
-
         updateChart(labels, froData, smpData);
+        
+        // Sync velocities to the new Head/Distance
+        calculateVelocities();
     }
 
     function updateChart(labels, froData, smpData) {
@@ -323,7 +330,6 @@
         });
     }
 
-    // Run calculation once all initial variables are set
     calculateAll();
 </script>
 </body>
