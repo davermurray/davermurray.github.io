@@ -128,23 +128,56 @@
     let routingChart = null;
     const params = new URLSearchParams(window.location.search);
 
-   function getSafeStr(paramName, defaultStr = "--") {
-        let val = params.get(paramName);
-        // If empty, null, OR contains a curly brace (unselected ExB tag), return default
-        if (!val || val === "null" || val.trim() === "" || val.includes("{")) return defaultStr;
-        return val;
+   // --- SAFETY CHECK & MEMORY FUNCTIONS ---
+    let rawName = params.get('name');
+    // Detect if the user deselected (URL is empty or has curly braces)
+    let isDeselected = (!rawName || rawName === "null" || rawName.trim() === "" || rawName.includes("{"));
+
+    function getSafeStr(paramName, defaultStr = "--") {
+        if (isDeselected) {
+            // We are deselected! Load the last viewed dam from memory.
+            let memVal = sessionStorage.getItem('damrot_' + paramName);
+            return (memVal && memVal !== "") ? memVal : defaultStr;
+        } else {
+            // New dam clicked! Save its data to memory for later.
+            let val = params.get(paramName);
+            let cleanVal = (val && val !== "null" && val.trim() !== "") ? val : "";
+            sessionStorage.setItem('damrot_' + paramName, cleanVal);
+            return cleanVal || defaultStr;
+        }
     }
 
     function getSafeNum(...paramNames) {
-        for (let p of paramNames) {
-            let val = params.get(p);
-            // If valid string AND doesn't contain a curly brace
-            if (val && val !== "null" && val.trim() !== "" && !val.includes("{")) {
-                let num = parseFloat(val);
-                if (!isNaN(num)) return num;
+        if (isDeselected) {
+            // We are deselected! Try to load the numbers from memory.
+            for (let p of paramNames) {
+                let memVal = sessionStorage.getItem('damrot_' + p);
+                if (memVal && memVal !== "") {
+                    let num = parseFloat(memVal);
+                    if (!isNaN(num)) return num;
+                }
             }
+            return 0;
+        } else {
+            // New dam clicked! Save all passed numbers to memory.
+            let validNum = 0;
+            let found = false;
+            for (let p of paramNames) {
+                let val = params.get(p);
+                let cleanVal = (val && val !== "null" && val.trim() !== "") ? val : "";
+                sessionStorage.setItem('damrot_' + p, cleanVal);
+                
+                // Return the first valid number we find in the chain
+                if (!found && cleanVal !== "") {
+                    let num = parseFloat(cleanVal);
+                    if (!isNaN(num)) {
+                        validNum = num;
+                        found = true;
+                    }
+                }
+            }
+            return validNum;
         }
-        return 0; // default to 0 if all params are empty/null/unselected
     }
     // ------------------------------
 
