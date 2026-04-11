@@ -6,20 +6,20 @@
     <title>Dam ROT Calculator</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #f4f4f4; overflow: hidden; }
-        .card { background: white; padding: 10px; border-radius: 0; box-shadow: none; height: 100vh; box-sizing: border-box; }
-        .input-group { margin-bottom: 12px; }
-        label { display: block; font-size: 0.85em; font-weight: bold; color: #333; margin-bottom: 4px; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background: #fff; }
+        body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; overflow: hidden; }
+        .card { background: white; padding: 8px; border-radius: 0; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; }
+        .input-group { margin-bottom: 8px; }
+        label { display: block; font-size: 0.75em; font-weight: bold; color: #333; margin-bottom: 2px; }
+        input, select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background: #fff; }
         .source-select { font-size: 0.75em; color: #0056b3; margin-top: 4px; border: none; background: transparent; padding: 0; text-decoration: underline; cursor: pointer; width: auto; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .stat-box { background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6; text-align: center; }
         .stat-label { font-size: 0.7em; text-transform: uppercase; color: #6c757d; font-weight: bold; }
         .stat-value { font-size: 1.1em; font-weight: bold; color: #007bff; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.75rem; }
         th, td { border: 1px solid #dee2e6; padding: 6px; text-align: center; }
         th { background: #f1f3f5; }
-        .chart-container { position: relative; height: 250px; width: 100%; margin-top: 15px; }
+        .chart-container { position: relative; height: 180px; width: 100%; margin-top: 10px; }
         .legend-custom { font-size: 0.75em; display: flex; justify-content: center; gap: 15px; margin-top: 5px; }
     </style>
 </head>
