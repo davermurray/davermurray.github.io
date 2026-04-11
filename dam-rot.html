@@ -128,22 +128,23 @@
     let routingChart = null;
     const params = new URLSearchParams(window.location.search);
 
-    // --- SAFETY CHECK FUNCTIONS ---
-    function getSafeStr(paramName, defaultStr = "--") {
+   function getSafeStr(paramName, defaultStr = "--") {
         let val = params.get(paramName);
-        if (!val || val === "null" || val.trim() === "") return defaultStr;
+        // If empty, null, OR contains a curly brace (unselected ExB tag), return default
+        if (!val || val === "null" || val.trim() === "" || val.includes("{")) return defaultStr;
         return val;
     }
 
     function getSafeNum(...paramNames) {
         for (let p of paramNames) {
             let val = params.get(p);
-            if (val && val !== "null" && val.trim() !== "") {
+            // If valid string AND doesn't contain a curly brace
+            if (val && val !== "null" && val.trim() !== "" && !val.includes("{")) {
                 let num = parseFloat(val);
                 if (!isNaN(num)) return num;
             }
         }
-        return 0; // default to 0 if all params are empty/null
+        return 0; // default to 0 if all params are empty/null/unselected
     }
     // ------------------------------
 
