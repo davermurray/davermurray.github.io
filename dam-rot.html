@@ -147,15 +147,26 @@
     }
     // ------------------------------
 
-    // Apply safe defaults on load
+    // --- INITIAL DATA LOAD FROM URL ---
+    // 1. Strings
     document.getElementById('damName').innerText = getSafeStr('name', 'Selected Dam');
     document.getElementById('nidId').innerText = "NID: " + getSafeStr('nidid', '--');
     
-    // Checks hydraulic first, then nid_height, then structural. Defaults to 0 if all missing.
+    // 2. Numbers
     document.getElementById('heightInput').value = getSafeNum('hydraulic', 'nid_height', 'structural');
-    
-    // Checks normal_storage first, then max_storage. Defaults to 0 if all missing.
     document.getElementById('storageInput').value = getSafeNum('normal_storage', 'max_storage');
+
+    // 3. Dam Type Mapping
+    const rawType = getSafeStr('type', '').toLowerCase();
+    const typeSel = document.getElementById('typeSelector');
+    if (rawType.includes("arch")) {
+        typeSel.value = "arch";
+    } else if (rawType.includes("concrete") || rawType.includes("gravity")) {
+        typeSel.value = "concrete";
+    } else {
+        typeSel.value = "earth"; // Earth is the default fallback
+    }
+    // ----------------------------------
 
     function applySource(type) {
         if (type === 'height') {
@@ -278,6 +289,7 @@
         });
     }
 
+    // Run calculation once all initial variables are set
     calculateAll();
 </script>
 </body>
