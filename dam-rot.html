@@ -1,312 +1,247 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dam Break Analysis</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    /* Global Reset & Container */
-    body { font-family: 'Avenir Next', 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; display: flex; justify-content: center; }
-    .widget-container { background: #fff; width: 100%; max-width: 440px; padding: 12px; box-sizing: border-box; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    
-    /* Header */
-    h4 { margin: 0 0 10px 0; font-size: 1.1em; color: #005e95; text-align: center; }
-    .header-id { font-weight: normal; color: #666; font-size: 0.85em; }
-    
-    /* Tabs CSS */
-    .tab-bar { display: flex; border-bottom: 2px solid #eee; margin-bottom: 12px; }
-    .tab-button { flex: 1; background: none; border: none; padding: 8px 0; cursor: pointer; font-size: 0.9em; font-weight: 600; color: #777; transition: 0.2s; }
-    .tab-button:hover { color: #333; background-color: #f9f9f9; }
-    .tab-button.active { color: #005e95; border-bottom: 2px solid #005e95; margin-bottom: -2px; }
-    .tab-content { display: none; animation: fadeIn 0.3s; }
-    .tab-content.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-    /* Inputs & Tables (Condensed) */
-    .input-group { margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 0.85em; }
-    label { font-weight: 600; color: #555; }
-    select, input { padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; width: 110px; font-size: 0.95em; box-sizing: border-box;}
-    
-    table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 0.8em; }
-    th, td { border: 1px solid #e0e0e0; padding: 5px 4px; text-align: center; }
-    th:first-child, td:first-child { text-align: left; }
-    th { background-color: #f8f9fa; font-weight: 600; }
-    .highlight { background-color: #e8f5e9; font-weight: bold; color: #2e7d32; }
-
-    /* Chart Container */
-    .chart-container { position: relative; height: 220px; width: 100%; margin-top: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dam ROT Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 10px; background: #f4f4f4; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .input-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85em; font-weight: bold; color: #333; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background: #fff; }
+        .source-select { font-size: 0.75em; color: #0056b3; margin-top: 4px; border: none; background: transparent; padding: 0; text-decoration: underline; cursor: pointer; width: auto; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .stat-box { background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6; text-align: center; }
+        .stat-label { font-size: 0.7em; text-transform: uppercase; color: #6c757d; font-weight: bold; }
+        .stat-value { font-size: 1.1em; font-weight: bold; color: #007bff; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8em; }
+        th, td { border: 1px solid #dee2e6; padding: 6px; text-align: center; }
+        th { background: #f1f3f5; }
+        .chart-container { position: relative; height: 250px; width: 100%; margin-top: 15px; }
+        .legend-custom { font-size: 0.75em; display: flex; justify-content: center; gap: 15px; margin-top: 5px; }
+    </style>
 </head>
 <body>
 
-  <div class="widget-container">
-    <h4><span id="damName">Select a Dam</span> <br><span class="header-id">NID: <span id="nidId">--</span></span></h4>
-    
-    <div class="tab-bar">
-      <button class="tab-button active" onclick="switchTab(event, 'tab-outflow')">Peak Outflow</button>
-      <button class="tab-button" onclick="switchTab(event, 'tab-routing')">Routing</button>
+<div class="card">
+    <h3 id="damName" style="margin: 0 0 5px 0;">Loading...</h3>
+    <div id="nidId" style="color: #666; font-size: 0.8em; margin-bottom: 15px;"></div>
+
+    <div class="input-group">
+        <label>Dam Type</label>
+        <select id="typeSelector" onchange="calculateAll()">
+            <option value="earth">Earth/Embankment</option>
+            <option value="concrete">Concrete/Gravity</option>
+            <option value="arch">Arch</option>
+        </select>
     </div>
 
-    <div id="tab-outflow" class="tab-content active">
-      <div class="input-group">
-        <label>Dam Type:</label>
-      <select id="typeSelector">
-        <option value="earth">Earth / Rockfill</option>
-        <option value="concrete">Concrete / Gravity</option>
-        <option value="arch">Arch</option>
-    </select>
-      </div>
-      <div class="input-group">
-        <label>Failure Mode:</label>
-        <select id="failureMode">
-          <option value="Overtopping">Overtopping</option>
-          <option value="Piping">Piping</option>
+    <div class="input-group">
+        <label>Breach Head (ft)</label>
+        <input type="number" id="heightInput" oninput="calculateAll()">
+        <select id="heightSource" class="source-select" onchange="applySource('height')">
+            <option value="">-- Change Height Source --</option>
+            <option value="hydraulic">Hydraulic Height</option>
+            <option value="nid_height">NID Height</option>
+            <option value="structural">Structural Height</option>
         </select>
-      </div>
-      <div class="input-group">
-        <label>NID Height Source:</label>
-        <select id="heightSelector">
-          <option value="hydraulic">Hydraulic</option>
-          <option value="structural">Structural</option>
-          <option value="nid_height">NID Height</option>
-        </select>
-      </div>
-      <div class="input-group">
-        <label>Head (ft):</label>
-        <input type="number" id="heightInput" step="0.1">
-      </div>
-      <div class="input-group">
-        <label>Volume (ac-ft):</label>
-        <input type="number" id="volumeInput" step="1">
-      </div>
+    </div>
 
-      <table>
+    <div class="input-group">
+        <label>Storage (ac-ft)</label>
+        <input type="number" id="storageInput" oninput="calculateAll()">
+        <select id="storageSource" class="source-select" onchange="applySource('storage')">
+            <option value="">-- Change Storage Source --</option>
+            <option value="volume">Max Storage</option>
+            <option value="normal_storage">Normal Storage</option>
+        </select>
+    </div>
+
+    <table>
         <thead>
-          <tr>
-            <th>Method</th>
-            <th>Width (ft)</th>
-            <th>Time (min)</th>
-            <th>Peak Q (cfs)</th>
-          </tr>
+            <tr>
+                <th>Method</th>
+                <th>Breach Width (ft)</th>
+                <th>Breach Time (hr)</th>
+                <th>Peak Q (cfs)</th>
+            </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Froehlich</td>
-            <td id="froehlichW">--</td>
-            <td id="froehlichT">--</td>
-            <td id="froehlichQ">--</td>
-          </tr>
-          <tr>
-            <td>SMPDBK</td>
-            <td id="smpdbkW">--</td>
-            <td id="smpdbkT">--</td>
-            <td id="smpdbkQ">--</td>
-          </tr>
+            <tr style="color: #007bff;">
+                <td>Froehlich</td>
+                <td id="froBw">--</td>
+                <td id="froTc">--</td>
+                <td id="froQ">--</td>
+            </tr>
+            <tr style="color: #dc3545;">
+                <td>SMPDBK</td>
+                <td id="smpBw">--</td>
+                <td id="smpTc">--</td>
+                <td id="smpQ">--</td>
+            </tr>
         </tbody>
-      </table>
+    </table>
+
+    <div class="input-group" style="margin-top: 20px;">
+        <label>Routing Distance (mi)</label>
+        <input type="number" id="distanceInput" value="10" oninput="calculateAll()">
     </div>
 
-    <div id="tab-routing" class="tab-content">
-      <div class="input-group">
-        <label>Max Distance (mi):</label>
-        <input type="number" id="distanceInput" value="10" step="1">
-      </div>
-      
-      <div class="chart-container">
+    <div class="chart-container">
         <canvas id="routingChart"></canvas>
-      </div>
+    </div>
+    <div class="legend-custom">
+        <span><b style="color:#007bff;">—</b> Froehlich</span>
+        <span><b style="color:#dc3545;">—</b> SMPDBK</span>
     </div>
 
-  </div>
+    <div class="stats-grid" style="margin-top: 20px;">
+        <div class="input-group" style="margin-bottom:0;">
+            <label>Channel Slope (ft/mi)</label>
+            <input type="number" id="slopeInput" value="10.0" step="0.1" oninput="calculateAll()">
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+            <label>Manning's n</label>
+            <input type="number" id="nInput" value="0.05" step="0.01" oninput="calculateAll()">
+        </div>
+    </div>
 
-  <script>
-    let myChart = null; // Global chart instance
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-label">Fread Vel.</div>
+            <div id="fread_val" class="stat-value">--</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">OHD Vel.</div>
+            <div id="ohd_val" class="stat-value">--</div>
+        </div>
+        <div class="stat-box" style="grid-column: span 2; background: #e7f3ff; border-color: #b8daff;">
+            <div class="stat-label">Est. Travel Time to POI</div>
+            <div id="travel_time" class="stat-value">--</div>
+        </div>
+    </div>
+</div>
 
-    // --- UI Logic: Tab Switching ---
-    function switchTab(evt, tabId) {
-      const contents = document.querySelectorAll('.tab-content');
-      contents.forEach(c => c.classList.remove('active'));
-      const buttons = document.querySelectorAll('.tab-button');
-      buttons.forEach(b => b.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      evt.currentTarget.classList.add('active');
-    }
-
-    // --- Data Logic: URL Parameters ---
+<script>
+    let routingChart = null;
     const params = new URLSearchParams(window.location.search);
-    
-    function getCleanParam(key) {
-        const val = params.get(key);
-        if (!val || val.includes('{') || val === 'null') return null;
-        return val;
-    }
-    
-    // Set Header Info
-    document.getElementById('damName').innerText = getCleanParam('name') || "No Dam Selected";
-    document.getElementById('nidId').innerText = getCleanParam('nidid') || "Please select a dam on the map";
-    
-    // Handle Dam Type Dropdown Logic
-    const rawType = (getCleanParam('type') || "").toLowerCase();
-    const typeSelector = document.getElementById('typeSelector');
-       
-    if (rawType.includes("arch")) {
-        typeSelector.value = "arch";
-    } else if (rawType.includes("concrete") || rawType.includes("gravity") || rawType.includes("masonry")) {
-        typeSelector.value = "concrete";
-    } else {
-        typeSelector.value = "earth"; // Default for NID "Earth" or "Embankment"
-    }
 
-    // Capture heights and storage
-    const heights = {
-        hydraulic: parseFloat(getCleanParam('hydraulic')) || 0,
-        structural: parseFloat(getCleanParam('structural')) || 0,
-        nid_height: parseFloat(getCleanParam('nid_height')) || 0
-    };
-    const vVal = parseFloat(getCleanParam('volume')) || 0;
-
-    document.getElementById('heightInput').value = heights.hydraulic || heights.nid_height || heights.structural || "";
-    document.getElementById('volumeInput').value = vVal || "";
+    document.getElementById('damName').innerText = params.get('name') || "Selected Dam";
+    document.getElementById('nidId').innerText = "NID: " + (params.get('nidid') || "N/A");
     
-    // Only run calculations if we actually have a dam selected
-    if ((heights.hydraulic > 0 || heights.nid_height > 0 || heights.structural > 0) && vVal > 0){
-        calculateAndPlot();
-    } else {
-        // Clear any existing chart data if no dam is selected
-        if (myChart) {
-            myChart.destroy();
-            myChart = null;
+    document.getElementById('heightInput').value = params.get('hydraulic') || params.get('nid_height') || params.get('structural') || 0;
+    document.getElementById('storageInput').value = params.get('volume') || params.get('normal_storage') || 0;
+
+    function applySource(type) {
+        if (type === 'height') {
+            const field = document.getElementById('heightSource').value;
+            if (field) document.getElementById('heightInput').value = params.get(field) || 0;
+        } else {
+            const field = document.getElementById('storageSource').value;
+            if (field) document.getElementById('storageInput').value = params.get(field) || 0;
         }
-    }
-   
-    // --- Math & Plotting Logic ---
-function calculateAndPlot() {
-    const h = parseFloat(document.getElementById('heightInput').value) || 0;
-    const v = parseFloat(document.getElementById('volumeInput').value) || 0;
-    const selectedType = document.getElementById('typeSelector').value;
-    const failureMode = document.getElementById('failureMode').value;
-    const maxDist = parseFloat(document.getElementById('distanceInput').value) || 10;
-
-    // 1. Guard Clause: Stop if no data
-    if (h <= 0 || v <= 0) {
-        ['froehlichW','froehlichT','froehlichQ','smpdbkW','smpdbkT','smpdbkQ'].forEach(id => {
-            document.getElementById(id).innerText = '--';
-        });
-        return;
+        calculateAll();
     }
 
-    // 2. Set Coefficients based on Dropdown
-    let bw_mult = 3; 
-    let tf_div = 10;
-    if (selectedType === "arch") { bw_mult = 0.9; tf_div = 50; }
-    else if (selectedType === "concrete") { bw_mult = 5; tf_div = 40; }
+    function calculateAll() {
+        const h = parseFloat(document.getElementById('heightInput').value) || 0;
+        const v = parseFloat(document.getElementById('storageInput').value) || 0;
+        const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
+        const slope = parseFloat(document.getElementById('slopeInput').value) || 10;
+        const n = parseFloat(document.getElementById('nInput').value) || 0.05;
+        const type = document.getElementById('typeSelector').value;
 
-    // 3. Froehlich Calculations
-    const Dv_m3 = v * 1233.48;
-    const Dh_m = h * 0.3048;
-    const K = (failureMode === "Piping") ? 1.0 : 1.4;
-    const Bf = 3.28 * (0.1803 * (K * Math.pow(Dv_m3, 0.32) * Math.pow(Dh_m, 0.19)));
-    const Tf_froehlich = 0.00254 * Math.pow(Dv_m3, 0.53) * Math.pow(Dh_m, -0.90) * 60;
-    const froehlichQ = 60.7 * Math.pow(v, 0.295) * Math.pow(h, 1.24);
+        if (h <= 0 || v <= 0) return;
 
-    // 4. SMPDBK Calculations
-    const Bm = bw_mult * h;
-    const Tf_smpdbk = h / tf_div;
-    const Dsa_ac = (2 * v) / h;
-    const smpdbk_const = (23.4 * Dsa_ac) / Bm;
-    const smpdbkQ = (3.1 * Bm) * Math.pow((smpdbk_const / ((Tf_smpdbk / 60) + smpdbk_const / Math.pow(h, 0.5))), 3.0);
+        // Froehlich Math
+        const froBw = 9.5 * Math.pow(v, 0.25) * Math.pow(h, 0.5);
+        const froTc = 0.59 * Math.pow(v, 0.47) * Math.pow(h, -0.91);
+        const froQ = 60.7 * Math.pow(v, 0.295) * Math.pow(h, 1.24);
 
-    // 5. Update Table Results
-    document.getElementById('froehlichW').innerText = Bf.toLocaleString('en-US', {maximumFractionDigits: 1});
-    document.getElementById('froehlichT').innerText = Tf_froehlich.toLocaleString('en-US', {maximumFractionDigits: 1});
-    document.getElementById('froehlichQ').innerText = froehlichQ.toLocaleString('en-US', {maximumFractionDigits: 0});
-    document.getElementById('smpdbkW').innerText = Bm.toLocaleString('en-US', {maximumFractionDigits: 1});
-    document.getElementById('smpdbkT').innerText = Tf_smpdbk.toLocaleString('en-US', {maximumFractionDigits: 1});
-    document.getElementById('smpdbkQ').innerText = smpdbkQ.toLocaleString('en-US', {maximumFractionDigits: 0});
+        document.getElementById('froBw').innerText = Math.round(froBw);
+        document.getElementById('froTc').innerText = froTc.toFixed(2);
+        document.getElementById('froQ').innerText = Math.round(froQ).toLocaleString();
 
-    // 6. Trigger Chart Update
-    updateChart(froehlichQ, smpdbkQ, maxDist);
+        // SMPDBK Math
+        let smpBw, smpTc, smpQ;
+        if (type === "concrete" || type === "arch") {
+            smpBw = 0.9 * 20; smpTc = 0.1;
+            smpQ = 3.1 * 20 * Math.pow(h, 1.5);
+        } else {
+            smpBw = 3 * h; smpTc = 0.5;
+            smpQ = (3.1 * smpBw * Math.pow(h, 1.5)) / (1 + (0.015 * smpBw / smpTc));
+        }
 
-      // 2. Generate Routing Data for the Chart
-      const labels = [];
-      const dataF = [];
-      const dataS = [];
-      
-      // Create 10 data points along the user's defined max distance
-      const step = maxDist / 10;
-      
-      for (let x = 0; x <= maxDist; x += step) {
-        labels.push(x.toFixed(1));
-        
-        // --- REPLACE THIS WITH YOUR APP.PY ROUTING MATH ---
-        // Currently using a placeholder exponential decay logic
-        const routedFroehlich = froehlichQ * Math.exp(-0.05 * x);
-        const routedSmpdbk = smpdbkQ * Math.exp(-0.05 * x);
-        // --------------------------------------------------
+        document.getElementById('smpBw').innerText = Math.round(smpBw);
+        document.getElementById('smpTc').innerText = smpTc.toFixed(1);
+        document.getElementById('smpQ').innerText = Math.round(smpQ).toLocaleString();
 
-        dataF.push(routedFroehlich);
-        dataS.push(routedSmpdbk);
-      }
+        // Routing Logic (Both Lines)
+        let labels = [];
+        let froData = [];
+        let smpData = [];
 
-      // 3. Render / Update the Chart
-      const ctx = document.getElementById('routingChart').getContext('2d');
-      
-      if (myChart) {
-        myChart.destroy(); // Clear the old chart before drawing a new one
-      }
-      
-      myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: 'Froehlich (cfs)',
-              data: dataF,
-              borderColor: '#2e7d32', // Green
-              backgroundColor: 'rgba(46, 125, 50, 0.1)',
-              borderWidth: 2,
-              fill: true,
-              tension: 0.3
+        for (let m = 0; m <= distMax; m += 0.5) {
+            labels.push(m);
+            froData.push(Math.pow(10, (Math.log10(froQ) - 0.03 * m)).toFixed(0));
+            smpData.push(Math.pow(10, (Math.log10(smpQ) - 0.03 * m)).toFixed(0));
+        }
+
+        // Velocities & Travel Time
+        const vFread = (0.005 / n) * Math.pow(h, (2/3)) * Math.pow(slope, 0.5);
+        const vOHD = 3 * Math.pow((h * 0.4), 0.33);
+        const travelTime = distMax / vFread;
+
+        document.getElementById('fread_val').innerText = vFread.toFixed(1) + " mph";
+        document.getElementById('ohd_val').innerText = vOHD.toFixed(1) + " mph";
+        document.getElementById('travel_time').innerText = travelTime.toFixed(1) + " hours";
+
+        updateChart(labels, froData, smpData);
+    }
+
+    function updateChart(labels, froData, smpData) {
+        const ctx = document.getElementById('routingChart').getContext('2d');
+        if (routingChart) routingChart.destroy();
+        routingChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Froehlich',
+                        data: froData,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.05)',
+                        fill: true,
+                        pointRadius: 0,
+                        tension: 0.2
+                    },
+                    {
+                        label: 'SMPDBK',
+                        data: smpData,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.05)',
+                        fill: true,
+                        pointRadius: 0,
+                        tension: 0.2
+                    }
+                ]
             },
-            {
-              label: 'SMPDBK (cfs)',
-              data: dataS,
-              borderColor: '#005e95', // Blue
-              backgroundColor: 'transparent',
-              borderWidth: 2,
-              borderDash: [5, 5], // Dashed line to differentiate
-              tension: 0.3
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { title: { display: true, text: 'Discharge (cfs)', font: { size: 10 } } },
+                    x: { title: { display: true, text: 'Miles Downstream', font: { size: 10 } } }
+                }
             }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          scales: {
-            x: { title: { display: true, text: 'Distance (mi)', font: {size: 11} }, ticks: {font: {size: 10}} },
-            y: { title: { display: true, text: 'Discharge (cfs)', font: {size: 11} }, ticks: {font: {size: 10}}, beginAtZero: true }
-          },
-          plugins: {
-            legend: { position: 'top', labels: { boxWidth: 12, font: {size: 10} } }
-          }
-        }
-      });
+        });
     }
 
-    // --- Event Listeners ---
-    document.getElementById('heightSelector').addEventListener('change', function(e) {
-      document.getElementById('heightInput').value = heights[e.target.value];
-      calculateAndPlot();
-    });
-    
-    // Recalculate and Re-plot on any input change
-    const inputs = ['typeSelector', 'failureMode', 'heightInput', 'volumeInput', 'distanceInput'];
-    inputs.forEach(id => document.getElementById(id).addEventListener('change', calculateAndPlot));
-    
-    // Initial run
-    calculateAndPlot();
-  </script>
+    calculateAll();
+</script>
 </body>
 </html>
