@@ -21,6 +21,8 @@
         th { background: #f1f3f5; }
         .chart-container { position: relative; height: 200px; width: 100%; margin-top: 10px; }
         .legend-custom { font-size: 0.75em; display: flex; justify-content: center; gap: 15px; margin-top: 5px; }
+        .input-row { display: flex; gap: 15px;  width: 100%; margin-bottom: 10px; }
+        .input-row .input-group { flex: 1; margin-bottom: 0; }
     </style>
 </head>
 <body>
@@ -29,15 +31,24 @@
     <h3 id="damName" style="margin: 0 0 5px 0;">Loading...</h3>
     <div id="nidId" style="color: #666; font-size: 0.8em; margin-bottom: 15px;"></div>
 
+   <div class="input-row">
     <div class="input-group">
         <label>Dam Type</label>
         <select id="typeSelector" onchange="calculateAll()">
-            <option value="earth">Earth/Embankment</option>
+            <option value="earthen">Earth/Embankment</option>
             <option value="concrete">Concrete/Gravity</option>
             <option value="arch">Arch</option>
         </select>
     </div>
-
+    <div class="input-group">
+        <label>Failure Mode</label>
+        <select id="failureModeSelector" onchange="calculateAll()">
+            <option value="overtopping">Overtopping</option>
+            <option value="piping">Piping</option>
+        </select>
+    </div>
+</div>
+<div class ="input-row">
     <div class="input-group">
         <label>Breach Head (ft)</label>
         <input type="number" id="heightInput" oninput="calculateAll()">
@@ -59,13 +70,17 @@
             <option value="normal_storage">Normal Storage</option>
         </select>
     </div>
-
+    <div class="input-group">
+        <label>Surface Area (ac)</label>
+        <input type="number" id="saInput" placeholder="Auto-calc" oninput="calculateAll()">
+    </div>
+</div>
     <table>
         <thead>
             <tr>
                 <th>Method</th>
                 <th>Breach Width (ft)</th>
-                <th>Breach Time (hr)</th>
+                <th>Breach Time (min)</th>
                 <th>Peak Q (cfs)</th>
             </tr>
         </thead>
@@ -163,7 +178,7 @@
                 let val = params.get(p);
                 let cleanVal = (val && val !== "null" && val.trim() !== "") ? val : "";
                 sessionStorage.setItem('damrot_' + p, cleanVal);
-                
+
                 if (!found && cleanVal !== "") {
                     // Strip commas before parsing
                     let num = parseFloat(cleanVal.replace(/,/g, ''));
@@ -181,7 +196,7 @@
     // --- INITIAL DATA LOAD FROM URL ---
     document.getElementById('damName').innerText = getSafeStr('name', 'Selected Dam');
     document.getElementById('nidId').innerText = "NID: " + getSafeStr('nidid', '--');
-    
+
     document.getElementById('heightInput').value = getSafeNum('hydraulic', 'nid_height', 'structural');
     document.getElementById('storageInput').value = getSafeNum('nid_storage', 'normal_storage', 'max_storage');
 
@@ -192,7 +207,7 @@
     } else if (rawType.includes("concrete") || rawType.includes("gravity")) {
         typeSel.value = "concrete";
     } else {
-        typeSel.value = "earth"; 
+        typeSel.value = "earth";
     }
     // ----------------------------------
 
@@ -236,6 +251,7 @@
         const v = parseFloat(document.getElementById('storageInput').value) || 0;
         const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
         const type = document.getElementById('typeSelector').value;
+        const failureMode = document.getElementById('failureModeSelector').value;
 
         if (h <= 0 || v <= 0) {
             document.getElementById('froBw').innerText = "--";
@@ -246,32 +262,63 @@
             document.getElementById('smpQ').innerText = "--";
             if (routingChart) routingChart.data.datasets.forEach(ds => ds.data = []);
             if (routingChart) routingChart.update();
-            calculateVelocities(); // clears the velocities
+            calculateVelocities();
             return;
         }
 
-        // Froehlich Math
-        const froBw = 9.5 * Math.pow(v, 0.25) * Math.pow(h, 0.5);
-        const froTc = 0.59 * Math.pow(v, 0.47) * Math.pow(h, -0.91);
-        const froQ = 60.7 * Math.pow(v, 0.295) * Math.pow(h, 1.24);
+        // --- Unit Conversions for Froehlich Breach Width ---
+        const v_m3 = v * 1233.48; // Convert ac-ft to cubic meters
+        const h_m = h * 0.3048;   // Convert ft to meters
+
+       // --- Froehlich Math ---
+        // Piping = 1.0, Overtopping = 1.4
+        const K = (failureMode === "piping") ? 1.0 : 1.4;
+        const froBw = 3.28 * (0.1803 * (K * Math.pow(v_m3, 0.32) * Math.pow(h_m, 0.19)));
+
+        // Updated to match app.py (Outputs in minutes)
+        const froTc = 0.00254 * Math.pow(v_m3, 0.53) * Math.pow(h_m, -0.90) * 60;
+        const froQ = 0.607 * Math.pow(v_m3, 0.295) * Math.pow(h_m, 1.24) * 35.3147; // Matches app.py line 205 (metric to cfs)
 
         document.getElementById('froBw').innerText = Math.round(froBw);
-        document.getElementById('froTc').innerText = froTc.toFixed(2);
+        document.getElementById('froTc').innerText = froTc.toFixed(1);
         document.getElementById('froQ').innerText = Math.round(froQ).toLocaleString();
 
-        // SMPDBK Math
-        let smpBw, smpTc, smpQ;
-        if (type === "concrete" || type === "arch") {
-            smpBw = 0.9 * 20; smpTc = 0.1;
-            smpQ = 3.1 * 20 * Math.pow(h, 1.5);
-        } else {
-            smpBw = 3 * h; smpTc = 0.5;
-            smpQ = (3.1 * smpBw * Math.pow(h, 1.5)) / (1 + (0.015 * smpBw / smpTc));
-        }
+        // --- SMPDBK Math ---
+    let smpBw, smpTc, smpQ;
 
-        document.getElementById('smpBw').innerText = Math.round(smpBw);
-        document.getElementById('smpTc').innerText = smpTc.toFixed(1);
-        document.getElementById('smpQ').innerText = Math.round(smpQ).toLocaleString();
+    // Breach Width
+    if (type === "arch") {
+        const tw_width = 100;
+        smpBw = 0.9 * tw_width;
+    } else if (type === "concrete") {
+        smpBw = 5 * h;
+    } else { // earthen
+        smpBw = 3 * h;
+    }
+
+    // Breach Time (Outputs in minutes)
+    if (type === "arch") {
+        smpTc = h / 50;
+    } else if (type === "concrete") {
+        smpTc = h / 40;
+    } else { // earthen
+        smpTc = h / 10;
+    }
+
+    // Surface Area & Peak Q
+    // Grab SA input. If blank, use the default estimate (2 * Volume / Head) from app.py
+    const saInput = parseFloat(document.getElementById('saInput').value);
+    const sa = !isNaN(saInput) ? saInput : (2 * v / h);
+
+    const smpdbk_const = (23.4 * sa) / smpBw;
+    const smpTc_hours = smpTc / 60; // Peak Q formula requires time in hours
+
+    // Updated to match app.py LMRFC ROT formula exactly
+    smpQ = (3.1 * smpBw) * Math.pow((smpdbk_const / (smpTc_hours + (smpdbk_const / Math.pow(h, 0.5)))), 3.0);
+
+    document.getElementById('smpBw').innerText = Math.round(smpBw);
+    document.getElementById('smpTc').innerText = smpTc.toFixed(1);
+    document.getElementById('smpQ').innerText = Math.round(smpQ).toLocaleString();
 
         // Routing Logic
         let labels = [];
@@ -285,7 +332,7 @@
         }
 
         updateChart(labels, froData, smpData);
-        
+
         // Sync velocities to the new Head/Distance
         calculateVelocities();
     }
