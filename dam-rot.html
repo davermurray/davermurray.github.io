@@ -199,7 +199,8 @@
 
     document.getElementById('heightInput').value = getSafeNum('hydraulic', 'nid_height', 'structural');
     document.getElementById('storageInput').value = getSafeNum('nid_storage', 'normal_storage', 'max_storage');
-
+    document.getElementById('saInput').value = getSafeNum('sa');
+    
     const rawType = getSafeStr('type', '').toLowerCase();
     const typeSel = document.getElementById('typeSelector');
     if (rawType.includes("arch")) {
