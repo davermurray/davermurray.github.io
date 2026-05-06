@@ -326,7 +326,7 @@
         let froData = [];
         let smpData = [];
 
-        for (let m = 0; m <= distMax; m += 0.1) {
+        for (let m = 0; m <= distMax; m += 0.25) {
             labels.push(m);
             froData.push(Math.pow(10, (Math.log10(froQ) - 0.03 * m)).toFixed(0));
             smpData.push(Math.pow(10, (Math.log10(smpQ) - 0.03 * m)).toFixed(0));
