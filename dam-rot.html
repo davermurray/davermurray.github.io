@@ -309,7 +309,7 @@
     // Surface Area & Peak Q
     // Grab SA input. If blank, use the default estimate (2 * Volume / Head) from app.py
     const saInput = parseFloat(document.getElementById('saInput').value);
-    const sa = !isNaN(saInput) ? saInput : (2 * v / h);
+    const sa = (saInput > 0) ? saInput : (2 * v / h);
 
     const smpdbk_const = (23.4 * sa) / smpBw;
     const smpTc_hours = smpTc / 60; // Peak Q formula requires time in hours
@@ -369,6 +369,7 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect:'false'}
                 plugins: { legend: { display: false } },
                 scales: {
                     y: { title: { display: true, text: 'Discharge (cfs)', font: { size: 10 } } },
