@@ -142,7 +142,10 @@
 
 <script>
     let routingChart = null;
-    const params = new URLSearchParams(window.location.search);
+    // Grab both the search string and the hash fragment that got cut off
+    let fullString = window.location.search + window.location.hash;
+    // Safely encode the rogue hashtag so the parameters don't break
+    const params = new URLSearchParams(fullString.replace('#', '%23'));
 
     // --- SAFETY CHECK & MEMORY FUNCTIONS ---
     let rawName = params.get('name');
