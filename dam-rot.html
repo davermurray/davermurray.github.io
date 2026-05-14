@@ -75,7 +75,9 @@
         <input type="number" id="saInput" placeholder="Auto-calc" oninput="calculateAll()">
     </div>
 </div>
+
     <table>
+        <caption><b>Estimates at the Dam</b></caption>
         <thead>
             <tr>
                 <th>Method</th>
@@ -101,10 +103,32 @@
     </table>
 
     <div class="input-group" style="margin-top: 20px;">
-        <label>Distance to Point of Interest (mi)</label>
+        <label>Distance (mi) to Point of Interest (POI):</label>
         <input type="number" id="distanceInput" value="10" oninput="calculateAll()">
     </div>
 
+    <table>
+        <caption><b>Estimates at the POI Distance</b</caption>
+        <thead>
+            <tr>
+                <th>Method</th>
+                <th>Q at POI (cfs)</th>
+                <th>Est. Depth at POI (ft)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="color: #007bff;">
+                <td>Froehlich</td>
+                <td id="froQPOI">--</td>
+                <td id="froDepth">--</td>
+            </tr>
+            <tr style="color: #dc3545;">
+                <td>SMPDBK</td>
+                <td id="smpQPOI">--</td>
+                <td id="smpDepth">--</td>
+            </tr>
+        </tbody>
+    </table>
     <div class="chart-container">
         <canvas id="routingChart"></canvas>
     </div>
@@ -264,6 +288,8 @@
             document.getElementById('smpBw').innerText = "--";
             document.getElementById('smpTc').innerText = "--";
             document.getElementById('smpQ').innerText = "--";
+            document.getElementById('froDepth').innerText = "--";
+            document.getElementById('smpDepth').innerText = "--";
             if (routingChart) routingChart.data.datasets.forEach(ds => ds.data = []);
             if (routingChart) routingChart.update();
             calculateVelocities();
@@ -287,59 +313,73 @@
         document.getElementById('froTc').innerText = froTc.toFixed(1);
         document.getElementById('froQ').innerText = Math.round(froQ).toLocaleString();
 
+
+
         // --- SMPDBK Math ---
-    let smpBw, smpTc, smpQ;
+        let smpBw, smpTc, smpQ;
 
-    // Breach Width
-    if (type === "arch") {
-        const tw_width = 100;
-        smpBw = 0.9 * tw_width;
-    } else if (type === "concrete") {
-        smpBw = 5 * h;
-    } else { // earthen
-        smpBw = 3 * h;
-    }
-
-    // Breach Time (Outputs in minutes)
-    if (type === "arch") {
-        smpTc = h / 50;
-    } else if (type === "concrete") {
-        smpTc = h / 40;
-    } else { // earthen
-        smpTc = h / 10;
-    }
-
-    // Surface Area & Peak Q
-    // Grab SA input. If blank, use the default estimate (2 * Volume / Head) from app.py
-    const saInput = parseFloat(document.getElementById('saInput').value);
-    const sa = (saInput > 0) ? saInput : (2 * v / h);
-
-    const smpdbk_const = (23.4 * sa) / smpBw;
-    const smpTc_hours = smpTc / 60; // Peak Q formula requires time in hours
-
-    // Updated to match app.py LMRFC ROT formula exactly
-    smpQ = (3.1 * smpBw) * Math.pow((smpdbk_const / (smpTc_hours + (smpdbk_const / Math.pow(h, 0.5)))), 3.0);
-
-    document.getElementById('smpBw').innerText = Math.round(smpBw);
-    document.getElementById('smpTc').innerText = smpTc.toFixed(1);
-    document.getElementById('smpQ').innerText = Math.round(smpQ).toLocaleString();
-
-        // Routing Logic
-        let labels = [];
-        let froData = [];
-        let smpData = [];
-
-        for (let m = 0; m <= distMax; m += 0.5) {
-            labels.push(m);
-            froData.push(Math.pow(10, (Math.log10(froQ) - 0.03 * m)).toFixed(0));
-            smpData.push(Math.pow(10, (Math.log10(smpQ) - 0.03 * m)).toFixed(0));
+        // Breach Width
+        if (type === "arch") {
+            const tw_width = 100;
+            smpBw = 0.9 * tw_width;
+        } else if (type === "concrete") {
+            smpBw = 5 * h;
+        } else { // earthen
+            smpBw = 3 * h;
         }
 
-        updateChart(labels, froData, smpData);
+        // Breach Time (Outputs in minutes)
+        if (type === "arch") {
+            smpTc = h / 50;
+        } else if (type === "concrete") {
+            smpTc = h / 40;
+        } else { // earthen
+            smpTc = h / 10;
+        }
 
-        // Sync velocities to the new Head/Distance
-        calculateVelocities();
-    }
+        // Surface Area & Peak Q
+        // Grab SA input. If blank, use the default estimate (2 * Volume / Head) from app.py
+        const saInput = parseFloat(document.getElementById('saInput').value);
+        const sa = (saInput > 0) ? saInput : (2 * v / h);
+
+        const smpdbk_const = (23.4 * sa) / smpBw;
+        const smpTc_hours = smpTc / 60; // Peak Q formula requires time in hours
+
+        // Updated to match app.py LMRFC ROT formula exactly
+        smpQ = (3.1 * smpBw) * Math.pow((smpdbk_const / (smpTc_hours + (smpdbk_const / Math.pow(h, 0.5)))), 3.0);
+
+        document.getElementById('smpBw').innerText = Math.round(smpBw);
+        document.getElementById('smpTc').innerText = smpTc.toFixed(1);
+        document.getElementById('smpQ').innerText = Math.round(smpQ).toLocaleString();
+
+        // Depth at POI (using the distanceInput value)
+        const poiDepth = Math.pow(10, (Math.log10(h * 0.4) - 0.03 * distMax)).toFixed(1);
+        const smpQPOI = Math.pow(10, (Math.log10(smpQ) - 0.03 * distMax)).toFixed(1);
+        const froQPOI = Math.pow(10, (Math.log10(froQ) - 0.03 * distMax)).toFixed(1);
+
+        document.getElementById('froDepth').innerText = poiDepth;
+        document.getElementById('smpDepth').innerText = poiDepth;
+        document.getElementById('froQPOI').innerText = Math.round(froQPOI).toLocaleString();
+        document.getElementById('smpQPOI').innerText = Math.round(smpQPOI).toLocaleString();
+            // Routing Logic
+            let labels = [];
+            let froData = [];
+            let smpData = [];
+
+            for (let m = 0; m <= distMax; m += 0.5) {
+                labels.push(m);
+                froData.push(Math.pow(10, (Math.log10(froQ) - 0.03 * m)).toFixed(0));
+                smpData.push(Math.pow(10, (Math.log10(smpQ) - 0.03 * m)).toFixed(0));
+
+                // If you want to track depth per step:
+                let stepDepth = Math.pow(10, (Math.log10(h * 0.4) - 0.03 * m)).toFixed(1);
+            }
+
+            updateChart(labels, froData, smpData);
+
+            // Sync velocities to the new Head/Distance
+            calculateVelocities();
+        }
 
     function updateChart(labels, froData, smpData) {
         const ctx = document.getElementById('routingChart').getContext('2d');
