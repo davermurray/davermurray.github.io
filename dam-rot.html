@@ -31,6 +31,7 @@
 <div class="card">
     <h3 id="damName" style="margin: 0 0 5px 0;">Loading... </h3>
     <div id="nidId" style="color: #666; font-size: 0.8em; margin-bottom: 15px;"></div>
+
    <div class="input-row">
     <div class="input-group">
         <label>Dam Type</label>
@@ -115,7 +116,7 @@
             <tr>
                 <th>Method</th>
                 <th>Q at POI (cfs)</th>
-                <th>Est. Depth at POI (ft)</th>
+                <th>Wave Height at POI (ft)</th>
             </tr>
         </thead>
         <tbody>
@@ -243,7 +244,7 @@
     document.getElementById('heightInput').value = getSafeNum('hydraulic', 'nid_height', 'structural');
     document.getElementById('storageInput').value = getSafeNum('nid_storage', 'normal_storage', 'max_storage');
     document.getElementById('saInput').value = getSafeNum('sa');
-    
+
     const rawType = getSafeStr('type', '').toLowerCase();
     const typeSel = document.getElementById('typeSelector');
     if (rawType.includes("arch")) {
@@ -266,35 +267,29 @@
         calculateAll();
     }
 
-     function calculateVelocities() {
+    function calculateVelocities() {
         const h = parseFloat(document.getElementById('heightInput').value) || 0;
         const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
         const slope = parseFloat(document.getElementById('slopeInput').value) || 10;
         const n = parseFloat(document.getElementById('nInput').value) || 0.05;
 
         if (h <= 0 || distMax <= 0) {
-            document.getElementById('fread_val').innerText = "--";
-            document.getElementById('travel_time').innerText = "--";
-            document.getElementById('time_valley').innerText = "--";
-            document.getElementById('time_foothills').innerText = "--";
-            document.getElementById('time_mountain').innerText = "--";
+            ['fread_val', 'travel_time', 'time_valley', 'time_foothills', 'time_mountain'].forEach(id => {
+                document.getElementById(id).innerText = "--";
+            });
             return;
         }
 
-        // Fread Calculation
         const vFread = (0.005 / n) * Math.pow(h, (2/3)) * Math.pow(slope, 0.5);
-        const travelTime = distMax / vFread;
-
         document.getElementById('fread_val').innerText = vFread.toFixed(1) + " mph";
-        document.getElementById('travel_time').innerText = travelTime.toFixed(1) + " hrs";
+        document.getElementById('travel_time').innerText = (distMax / vFread).toFixed(1) + " hrs";
 
-        // Terrain-Based Calculations (using mid-range values)
+        // Terrain Estimates
         document.getElementById('time_valley').innerText = (distMax / 3.5).toFixed(1) + " hrs";
         document.getElementById('time_foothills').innerText = (distMax / 6.0).toFixed(1) + " hrs";
         document.getElementById('time_mountain').innerText = (distMax / 9.0).toFixed(1) + " hrs";
     }
 
-    // Core calculation function (updates math + chart, then calls velocities)
     function calculateAll() {
         const h = parseFloat(document.getElementById('heightInput').value) || 0;
         const v = parseFloat(document.getElementById('storageInput').value) || 0;
@@ -303,113 +298,74 @@
         const failureMode = document.getElementById('failureModeSelector').value;
 
         if (h <= 0 || v <= 0) {
-            document.getElementById('initialDepth').innerText = "--"; // Add this
-            document.getElementById('froBw').innerText = "--";
-            document.getElementById('froTc').innerText = "--";
-            document.getElementById('froQ').innerText = "--";
-            document.getElementById('smpBw').innerText = "--";
-            document.getElementById('smpTc').innerText = "--";
-            document.getElementById('smpQ').innerText = "--";
-            document.getElementById('froDepth').innerText = "--";
-            document.getElementById('smpDepth').innerText = "--";
-            if (routingChart) routingChart.data.datasets.forEach(ds => ds.data = []);
-            if (routingChart) routingChart.update();
+            // Reset fields
+            document.getElementById('initialDepth').innerText = "--";
+            ['froBw', 'froTc', 'froQ', 'smpBw', 'smpTc', 'smpQ', 'froDepth', 'smpDepth', 'froQPOI', 'smpQPOI'].forEach(id => {
+                document.getElementById(id).innerText = "--";
+            });
+            if (routingChart) { routingChart.destroy(); routingChart = null; }
             calculateVelocities();
             return;
         }
 
-        // --- Unit Conversions for Froehlich Breach Width ---
-        const v_m3 = v * 1233.48; // Convert ac-ft to cubic meters
-        const h_m = h * 0.3048;   // Convert ft to meters
-
-        //Initial 40% depth
+        // Initial 40% depth
         const initD = (h * 0.4).toFixed(1);
         document.getElementById('initialDepth').innerText = initD;
 
-       // --- Froehlich Math ---
-        // Piping = 1.0, Overtopping = 1.4
+        // Math Conversions
+        const v_m3 = v * 1233.48;
+        const h_m = h * 0.3048;
         const K = (failureMode === "piping") ? 1.0 : 1.4;
-        const froBw = 3.28 * (0.1803 * (K * Math.pow(v_m3, 0.32) * Math.pow(h_m, 0.19)));
 
-        // Updated to match app.py (Outputs in minutes)
+        // Froehlich
+        const froBw = 3.28 * (0.1803 * (K * Math.pow(v_m3, 0.32) * Math.pow(h_m, 0.19)));
         const froTc = 0.00254 * Math.pow(v_m3, 0.53) * Math.pow(h_m, -0.90) * 60;
-        const froQ = 0.607 * Math.pow(v_m3, 0.295) * Math.pow(h_m, 1.24) * 35.3147; // Matches app.py line 205 (metric to cfs)
+        const froQ = 0.607 * Math.pow(v_m3, 0.295) * Math.pow(h_m, 1.24) * 35.3147;
 
         document.getElementById('froBw').innerText = Math.round(froBw);
         document.getElementById('froTc').innerText = froTc.toFixed(1);
         document.getElementById('froQ').innerText = Math.round(froQ).toLocaleString();
 
-
-
-        // --- SMPDBK Math ---
-        let smpBw, smpTc, smpQ;
-
-        // Breach Width
-        if (type === "arch") {
-            const tw_width = 100;
-            smpBw = 0.9 * tw_width;
-        } else if (type === "concrete") {
-            smpBw = 5 * h;
-        } else { // earthen
-            smpBw = 3 * h;
-        }
-
-        // Breach Time (Outputs in minutes)
-        if (type === "arch") {
-            smpTc = h / 50;
-        } else if (type === "concrete") {
-            smpTc = h / 40;
-        } else { // earthen
-            smpTc = h / 10;
-        }
-
-        // Surface Area & Peak Q
-        // Grab SA input. If blank, use the default estimate (2 * Volume / Head) from app.py
+        // SMPDBK
+        let smpBw = (type === "arch") ? 90 : (type === "concrete" ? 5 * h : 3 * h);
+        let smpTc = (type === "arch") ? h / 50 : (type === "concrete" ? h / 40 : h / 10);
         const saInput = parseFloat(document.getElementById('saInput').value);
         const sa = (saInput > 0) ? saInput : (2 * v / h);
-
         const smpdbk_const = (23.4 * sa) / smpBw;
-        const smpTc_hours = smpTc / 60; // Peak Q formula requires time in hours
-
-        // Updated to match app.py LMRFC ROT formula exactly
-        smpQ = (3.1 * smpBw) * Math.pow((smpdbk_const / (smpTc_hours + (smpdbk_const / Math.pow(h, 0.5)))), 3.0);
+        const smpQ = (3.1 * smpBw) * Math.pow((smpdbk_const / ((smpTc/60) + smpdbk_const / Math.pow(h, 0.5))), 3.0);
 
         document.getElementById('smpBw').innerText = Math.round(smpBw);
         document.getElementById('smpTc').innerText = smpTc.toFixed(1);
         document.getElementById('smpQ').innerText = Math.round(smpQ).toLocaleString();
 
-        // Depth at POI (using the distanceInput value)
+        // POI Table Updates
         const poiDepth = Math.pow(10, (Math.log10(h * 0.4) - 0.03 * distMax)).toFixed(1);
-        const smpQPOI = Math.pow(10, (Math.log10(smpQ) - 0.03 * distMax)).toFixed(1);
-        const froQPOI = Math.pow(10, (Math.log10(froQ) - 0.03 * distMax)).toFixed(1);
-
         document.getElementById('froDepth').innerText = poiDepth;
         document.getElementById('smpDepth').innerText = poiDepth;
-        document.getElementById('froQPOI').innerText = Math.round(froQPOI).toLocaleString();
-        document.getElementById('smpQPOI').innerText = Math.round(smpQPOI).toLocaleString();
-            // Routing Logic
-            let labels = [];
-            let froData = [];
-            let smpData = [];
+        document.getElementById('froQPOI').innerText = Math.round(Math.pow(10, (Math.log10(froQ) - 0.03 * distMax))).toLocaleString();
+        document.getElementById('smpQPOI').innerText = Math.round(Math.pow(10, (Math.log10(smpQ) - 0.03 * distMax))).toLocaleString();
 
-            for (let m = 0; m <= distMax; m += 0.5) {
-                labels.push(m);
-                froData.push(Math.pow(10, (Math.log10(froQ) - 0.03 * m)).toFixed(0));
-                smpData.push(Math.pow(10, (Math.log10(smpQ) - 0.03 * m)).toFixed(0));
+        // Routing Logic for Chart
+        let labels = [];
+        let froData = [];
+        let smpData = [];
+        let depthData = [];
 
-                // If you want to track depth per step:
-                let stepDepth = Math.pow(10, (Math.log10(h * 0.4) - 0.03 * m)).toFixed(1);
-            }
-
-            updateChart(labels, froData, smpData);
-
-            // Sync velocities to the new Head/Distance
-            calculateVelocities();
+        for (let m = 0; m <= distMax; m += 0.5) {
+            labels.push(m);
+            froData.push(Math.round(Math.pow(10, (Math.log10(froQ) - 0.03 * m))));
+            smpData.push(Math.round(Math.pow(10, (Math.log10(smpQ) - 0.03 * m))));
+            depthData.push(Math.pow(10, (Math.log10(h * 0.4) - 0.03 * m)).toFixed(1));
         }
 
-    function updateChart(labels, froData, smpData) {
+        updateChart(labels, froData, smpData, depthData);
+        calculateVelocities();
+    }
+
+    function updateChart(labels, froData, smpData, depthData) {
         const ctx = document.getElementById('routingChart').getContext('2d');
         if (routingChart) routingChart.destroy();
+
         routingChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -438,8 +394,33 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect:'false'},
-                plugins: { legend: { display: false } },
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                        // 1. Adds " miles" to the top of the tooltip
+                        title: function(tooltipItems) {
+                            return tooltipItems[0].label + ' miles';
+                        },
+                        // 2. Formats the discharge values with commas
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) { label += ': '; }
+                            if (context.parsed.y !== null) {
+                                label += new Intl.NumberFormat().format(context.parsed.y) + ' cfs';
+                            }
+                            return label;
+                        },
+                        // 3. Adds the Depth line at the bottom
+                        footer: function(tooltipItems) {
+                            const index = tooltipItems[0].dataIndex;
+                            const depth = depthData[index];
+                            return 'Est. Depth: ' + depth + ' ft';
+                        }
+                        }
+                    }
+                },
                 scales: {
                     y: { title: { display: true, text: 'Discharge (cfs)', font: { size: 10 } } },
                     x: { title: { display: true, text: 'Miles Downstream', font: { size: 10 } } }
