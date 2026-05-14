@@ -29,8 +29,8 @@
 <body>
 
 <div class="card">
-    <h3 id="damName" style="margin: 0 0 5px 0;">Loading... <div id="nidId" style="color: #666; font-size: 0.8em; margin-bottom: 15px;"></div>
-    </h3>
+    <h3 id="damName" style="margin: 0 0 5px 0;">Loading... </h3>
+    <div id="nidId" style="color: #666; font-size: 0.8em; margin-bottom: 15px;"></div>
    <div class="input-row">
     <div class="input-group">
         <label>Dam Type</label>
@@ -238,7 +238,7 @@
 
     // --- INITIAL DATA LOAD FROM URL ---
     document.getElementById('damName').innerText = getSafeStr('name', 'Selected Dam');
-    document.getElementById('nidId').innerText = " NID: " + getSafeStr('nidid', '--');
+    document.getElementById('nidId').innerText = "NID: " + getSafeStr('nidid', '--');
 
     document.getElementById('heightInput').value = getSafeNum('hydraulic', 'nid_height', 'structural');
     document.getElementById('storageInput').value = getSafeNum('nid_storage', 'normal_storage', 'max_storage');
