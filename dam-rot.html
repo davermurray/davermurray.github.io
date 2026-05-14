@@ -13,9 +13,10 @@
         input, select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background: #fff; }
         .source-select { font-size: 0.75em; color: #0056b3; margin-top: 4px; border: none; background: transparent; padding: 0; text-decoration: underline; cursor: pointer; width: auto; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .stats-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
         .stat-box { background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6; text-align: center; }
         .stat-label { font-size: 0.7em; text-transform: uppercase; color: #6c757d; font-weight: bold; }
-        .stat-value { font-size: 1.1em; font-weight: bold; color: #007bff; }
+        .stat-value { font-size: 0.9em; font-weight: bold; color: #007bff; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.75rem; }
         th, td { border: 1px solid #dee2e6; padding: 6px; text-align: center; }
         th { background: #f1f3f5; }
@@ -75,9 +76,10 @@
         <input type="number" id="saInput" placeholder="Auto-calc" oninput="calculateAll()">
     </div>
 </div>
-
+<div style="margin-top: 15px; color: #333; font-size: 0.80rem;">
+    <b>Estimates at the Dam</b> - Initial Wave Height (40%): <b><span id="initialDepth">--</span> </b>ft
+</div>
     <table>
-        <caption><b>Estimates at the Dam</b></caption>
         <thead>
             <tr>
                 <th>Method</th>
@@ -106,9 +108,10 @@
         <label>Distance (mi) to Point of Interest (POI):</label>
         <input type="number" id="distanceInput" value="10" oninput="calculateAll()">
     </div>
-
+<!--<div style="margin-top: 15px; color: #333; font-size: 0.80rem;">
+<b>Estimates at the POI Distance</b>
+</div>-->
     <table>
-        <caption><b>Estimates at the POI Distance</b</caption>
         <thead>
             <tr>
                 <th>Method</th>
@@ -136,7 +139,25 @@
         <span><b style="color:#007bff;">—</b> Froehlich</span>
         <span><b style="color:#dc3545;">—</b> SMPDBK</span>
     </div>
+    <div style="margin-top: 15px; color: #333; font-size: 0.80rem;">
+    <b>Travel Times to POI</b>
+    </div>
 
+    <div class="stats-grid-3" style="margin-top: 5px;">
+    <div class="stat-box">
+        <div class="stat-label">Valley (3.5 avg mph)</div>
+       <div id="time_valley" class="stat-value">--</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-label">Foothills (6.0 avg mph)</div>
+        <div id="time_foothills" class="stat-value">--</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-label">Mountainous (9.0 avg mph)</div>
+       <div id="time_mountain" class="stat-value">--</div>
+    </div>
+
+</div>
     <div class="stats-grid" style="margin-top: 20px;">
         <div class="input-group" style="margin-bottom:0;">
             <label>Channel Slope (ft/mi)</label>
@@ -148,19 +169,15 @@
         </div>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-box">
-            <div class="stat-label">Fread Vel.</div>
-            <div id="fread_val" class="stat-value">--</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-label">OHD Vel.</div>
-            <div id="ohd_val" class="stat-value">--</div>
-        </div>
-        <div class="stat-box" style="grid-column: span 2; background: #e7f3ff; border-color: #b8daff;">
-            <div class="stat-label">Est. Travel Time to POI</div>
-            <div id="travel_time" class="stat-value">--</div>
-        </div>
+   <div class="stats-grid">
+    <div class="stat-box">
+        <div class="stat-label">Fread Velocity</div>
+        <div id="fread_val" class="stat-value">--</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-label">Fread Travel Time</div>
+        <div id="travel_time" class="stat-value">--</div>
+    </div>
     </div>
 </div>
 
@@ -250,27 +267,32 @@
         calculateAll();
     }
 
-    // Dedicated function for Velocities (does not touch the chart)
-    function calculateVelocities() {
+     function calculateVelocities() {
         const h = parseFloat(document.getElementById('heightInput').value) || 0;
         const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
         const slope = parseFloat(document.getElementById('slopeInput').value) || 10;
         const n = parseFloat(document.getElementById('nInput').value) || 0.05;
 
-        if (h <= 0) {
+        if (h <= 0 || distMax <= 0) {
             document.getElementById('fread_val').innerText = "--";
-            document.getElementById('ohd_val').innerText = "--";
             document.getElementById('travel_time').innerText = "--";
+            document.getElementById('time_valley').innerText = "--";
+            document.getElementById('time_foothills').innerText = "--";
+            document.getElementById('time_mountain').innerText = "--";
             return;
         }
 
+        // Fread Calculation
         const vFread = (0.005 / n) * Math.pow(h, (2/3)) * Math.pow(slope, 0.5);
-        const vOHD = 3 * Math.pow((h * 0.4), 0.33);
         const travelTime = distMax / vFread;
 
         document.getElementById('fread_val').innerText = vFread.toFixed(1) + " mph";
-        document.getElementById('ohd_val').innerText = vOHD.toFixed(1) + " mph";
-        document.getElementById('travel_time').innerText = travelTime.toFixed(1) + " hours";
+        document.getElementById('travel_time').innerText = travelTime.toFixed(1) + " hrs";
+
+        // Terrain-Based Calculations (using mid-range values)
+        document.getElementById('time_valley').innerText = (distMax / 3.5).toFixed(1) + " hrs";
+        document.getElementById('time_foothills').innerText = (distMax / 6.0).toFixed(1) + " hrs";
+        document.getElementById('time_mountain').innerText = (distMax / 9.0).toFixed(1) + " hrs";
     }
 
     // Core calculation function (updates math + chart, then calls velocities)
@@ -282,6 +304,7 @@
         const failureMode = document.getElementById('failureModeSelector').value;
 
         if (h <= 0 || v <= 0) {
+            document.getElementById('initialDepth').innerText = "--"; // Add this
             document.getElementById('froBw').innerText = "--";
             document.getElementById('froTc').innerText = "--";
             document.getElementById('froQ').innerText = "--";
@@ -299,6 +322,10 @@
         // --- Unit Conversions for Froehlich Breach Width ---
         const v_m3 = v * 1233.48; // Convert ac-ft to cubic meters
         const h_m = h * 0.3048;   // Convert ft to meters
+
+        //Initial 40% depth
+        const initD = (h * 0.4).toFixed(1);
+        document.getElementById('initialDepth').innerText = initD;
 
        // --- Froehlich Math ---
         // Piping = 1.0, Overtopping = 1.4
