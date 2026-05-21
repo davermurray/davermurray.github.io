@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+    h1, h2, h3 { color: #111; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+    a { color: #0366d6; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back-link { display: inline-block; margin-bottom: 20px; font-weight: bold; }
+    .footer { margin-top: 30px; font-style: italic; font-size: 0.9em; color: #666; border-top: 1px solid #eaecef; padding-top: 10px; }
+  </style>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+  <a href="docs-index.html" class="back-link">&larr; Back to Main Menu</a>
+
+  <h2>SMPDBK Breach Width Information</h2>
+  <p>The NWS Simplified Dam-Break Model uses default "Rules of Thumb" values for breach width based upon the type of dam. They are as follows:</p>
+  <ul>
+    <li><strong>Earthen Dam:</strong> \(B = 3 \times H\)</li>
+    <li><strong>Concrete Gravity Dam:</strong> \(B = 5 \times H\)</li>
+    <li><strong>Concrete Arch Dam:</strong> \(B = 0.9 \times W\)</li>
+  </ul>
+  
+  <p><strong>Where:</strong></p>
+  <ul>
+    <li><strong>\(B\)</strong> = Breach Width (ft)</li>
+    <li><strong>\(H\)</strong> = Breach Head (ft) - defined as Depth of Water at time of Breach</li>
+    <li><strong>\(W\)</strong> = Maximum Tailwater Width (Crest Length) of Dam (ft)</li>
+  </ul>
+
+  <h2>SMPDBK Breach Time Information</h2>
+  <p>The NWS Simplified Dam-Break Model uses default "Rules of Thumb" values for breach time based upon the type of dam. They are as follows:</p>
+  <ul>
+    <li><strong>Earthen Dam:</strong> \(T = H / 10\)</li>
+    <li><strong>Concrete Gravity Dam:</strong> \(T = H / 40\)</li>
+    <li><strong>Concrete Arch Dam:</strong> \(T = H / 50\)</li>
+  </ul>
+  
+  <p><strong>Where:</strong></p>
+  <ul>
+    <li><strong>\(T\)</strong> = Breach Time (min)</li>
+    <li><strong>\(H\)</strong> = Breach Head (ft) - defined as Depth of Water at time of Breaching</li>
+  </ul>
+
+  <div class="footer">Additional information can be found in the document "The NWS Simplified Dam-Break Flood forecasting model" by Wetmore J. and Fread, D.; revised in 1991 by Fread, D., Lewis, Janice and Wiele, S.</div>
+
+</body>
+</html>
