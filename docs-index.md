@@ -1,3 +1,6 @@
+<style>
+  header, .page-header { display: none !important; }
+</style>
 # MARFC Dam Break ROT Documentation
 
 Welcome to the methodology and reference documentation for the MARFC Dam Break Rules of Thumb (ROT) tool. Select a topic below to view the detailed equations and parameters.
