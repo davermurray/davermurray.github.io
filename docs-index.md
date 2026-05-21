@@ -1,6 +1,8 @@
 <style>
-  header, .page-header { display: none !important; }
+  header, .page-header, .site-header, h1.project-name, h2.project-tagline { display: none !important; }
+  .main-content { padding-top: 0 !important; }
 </style>
+
 # MARFC Dam Break ROT Documentation
 
 Welcome to the methodology and reference documentation for the MARFC Dam Break Rules of Thumb (ROT) tool. Select a topic below to view the detailed equations and parameters.
