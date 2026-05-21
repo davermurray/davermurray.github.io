@@ -1,5 +1,6 @@
 ## SMPDBK Breach Width Information
 Information below was originally developed by LMRFC and has been reformatted for this display. 
+
 The NWS Simplified Dam-Break Model uses default "Rules of Thumb" values for breach width based upon the type of dam. They are as follows:
 
 * **Earthen Dam:** $$B = 3 \times H$$
