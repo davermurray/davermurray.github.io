@@ -1,4 +1,5 @@
 ## Froehlich Breach Width Information
+Information here was originally developed by LMRFC and has been reformatted to fit here.
 
 Breach width computed using equations developed by Froehlich in 1995. Predictor equations were developed using regression analysis of 63 historical dam breaks. The equation derived from this study was predominantly based upon earthen dams under 50ft high.
 
