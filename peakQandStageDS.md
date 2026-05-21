@@ -5,7 +5,7 @@ The OHD downstream flow and stage equations were provided to the LMRFC years ago
 
 ### Downstream Flow Forecast
 
-**Qd = 10^[log(Q) - 0.03(X)]**
+$$Q_d = 10^{[\log(Q) - 0.03(X)]}$$
 
 **Where:**
 * **Qd** = Discharge (cfs) at a point X miles downstream
@@ -16,7 +16,7 @@ The OHD downstream flow and stage equations were provided to the LMRFC years ago
 
 ### Downstream Stage Forecast
 
-**h = 10^[log(Ht) - 0.03(X)]**
+$$h = 10^{[\log(H_t) - 0.03(X)]}$$
 
 **Where:**
 * **h** = Downstream stage (ft)
