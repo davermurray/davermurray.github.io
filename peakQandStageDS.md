@@ -1,5 +1,5 @@
 ## NWS OHD Downstream Flow and Stage Forecast
-Information below was originally compiled my LMRFC.
+Information below was originally compiled by LMRFC.
 
 The OHD downstream flow and stage equations were provided to the LMRFC years ago. They were developed by Lee Larson and are as follows:
 
