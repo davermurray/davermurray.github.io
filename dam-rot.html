@@ -191,7 +191,9 @@
     const params = new URLSearchParams(fullString.replace('#', '%23'));
 
     // --- SAFETY CHECK & MEMORY FUNCTIONS ---
-    let rawName = params.get('name');
+    let nameMatch = fullString.match(/[?&]name=(.*?)(?=&nidid=|$)/);
+    let rawName = nameMatch ? decodeURIComponent(nameMatch[1]) : null;
+
     let isDeselected = (!rawName || rawName === "null" || rawName.trim() === "" || rawName.includes("{"));
 
     function getSafeStr(paramName, defaultStr = "--") {
