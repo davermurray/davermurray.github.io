@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+   body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      line-height: 1.4; /* Tighter line height */
+      font-size: 13px; /* Smaller base font size */
+      color: #333; 
+      max-width: 100%; /* Allows it to flow naturally in the widget */
+      margin: 0 auto; 
+      padding: 10px; /* Reduced outer padding */
+    }
+    h1 { font-size: 1.4em; }
+    h2 { font-size: 1.2em; }
+    h3 { font-size: 1.1em; }
+    h1, h2, h3 { 
+      color: #111; 
+      border-bottom: 1px solid #eaecef; 
+      padding-bottom: 0.2em; 
+      margin-top: 1em; 
+      margin-bottom: 0.5em; 
+    }
+    a { color: #0366d6; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back-link { display: inline-block; margin-bottom: 15px; font-weight: bold; }
+    .footer { margin-top: 20px; font-style: italic; font-size: 0.85em; color: #666; border-top: 1px solid #eaecef; padding-top: 10px; }
+    .note { border-left: 4px solid #0366d6; padding-left: 10px; color: #555; background-color: #f6f8fa; padding-top: 8px; padding-bottom: 8px; margin: 15px 0; }
+    /* Tighter Table Styling */
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; font-size: 0.9em; }
+    th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+    th { background-color: #f6f8fa; color: #24292e; } </style>
+
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  
+  <a href="docs-index.html" class="back-link">&larr; Back to Main Menu</a>
+
+  <h2>Froehlich Breach Width Information</h2>
+  <p>Breach width computed using equations developed by Froehlich in 1995. Predictor equations were developed using regression analysis of 63 historical dam breaks. The equation derived from this study was predominantly based upon earthen dams under 50ft high.</p>
+  <p>Breach width is computed with the following:</p>
+  
+  <p style="text-align: center;">$$B_a = 0.1803 \cdot K \cdot [V^{0.32} \cdot H^{0.19}]$$</p>
+  
+  <p><strong>Where:</strong></p>
+  <ul>
+    <li><strong>\(K\)</strong> = 1.0 for Piping Failure or 1.4 for Overtopping Failure</li>
+    <li><strong>\(B_a\)</strong> = Average Breach Width (m)</li>
+    <li><strong>\(V\)</strong> = Volume of Reservoir (m³)</li>
+    <li><strong>\(H\)</strong> = Breach Head (m) - defined as Depth of Water at time of Breaching</li>
+  </ul>
+  
+  <div class="note"><strong>NOTE:</strong> Units of this equation are in metric, conversion is done internally to English units for consistency with the other relations in this GUI and with the USACE NID database.</div>
+  
+  <p>He also suggests using a breach side slope (h:v) of 1.4 for overtopping failures and 0.9 for other failure modes.</p>
+
+  <h2>Froehlich Breach Time Information</h2>
+  <p>Breach time is computed using equations developed by Froehlich in 1995. Predictor equations were developed using regression analysis of 63 historical dam breaks. The equation derived from this study was predominantly based upon earthen dams under 50ft high.</p>
+  <p>Breach time is computed with the following:</p>
+  
+  <p style="text-align: center;">$$T = (0.00254 \cdot [ V^{0.53} \cdot H^{-0.9} ]) \cdot 60$$</p>
+  
+  <p><strong>Where:</strong></p>
+  <ul>
+    <li><strong>\(T\)</strong> = Breach Time (min)</li>
+    <li><strong>\(V\)</strong> = Volume of Reservoir (m³)</li>
+    <li><strong>\(H\)</strong> = Breach Head (m) - defined as Depth of Water at time of Breaching</li>
+  </ul>
+  
+  <div class="note"><strong>NOTE:</strong> Units of this equation are in metric, conversion is done internally to English units for consistency with the other relations in this GUI and with the USACE NID database.</div>
+  
+  <p>He also suggests using a breach side slope (h:v) of 1.4 for overtopping failures and 0.9 for other failure modes.</p>
+
+  <div class="footer">Additional information can be found in the document "Embankment Dam Breach Parameters Revisited" by Froehlich, D.; 1995b in Water Resources Engineering, Proceedings of the 1995 ASCE Conference on Water Resources Engineering, San Antonio, Texas, August 14-18, 1995, p. 887-891.</div>
+
+</body>
+</html>

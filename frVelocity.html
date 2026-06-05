@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+   body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      line-height: 1.4; /* Tighter line height */
+      font-size: 13px; /* Smaller base font size */
+      color: #333; 
+      max-width: 100%; /* Allows it to flow naturally in the widget */
+      margin: 0 auto; 
+      padding: 10px; /* Reduced outer padding */
+    }
+    h1 { font-size: 1.4em; }
+    h2 { font-size: 1.2em; }
+    h3 { font-size: 1.1em; }
+    h1, h2, h3 { 
+      color: #111; 
+      border-bottom: 1px solid #eaecef; 
+      padding-bottom: 0.2em; 
+      margin-top: 1em; 
+      margin-bottom: 0.5em; 
+    }
+    a { color: #0366d6; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back-link { display: inline-block; margin-bottom: 15px; font-weight: bold; }
+    .footer { margin-top: 20px; font-style: italic; font-size: 0.85em; color: #666; border-top: 1px solid #eaecef; padding-top: 10px; }
+    .note { border-left: 4px solid #0366d6; padding-left: 10px; color: #555; background-color: #f6f8fa; padding-top: 8px; padding-bottom: 8px; margin: 15px 0; }
+    /* Tighter Table Styling */
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; font-size: 0.9em; }
+    th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+    th { background-color: #f6f8fa; color: #24292e; }
+  </style>
+   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+  <a href="docs-index.html" class="back-link">&larr; Back to Main Menu</a>
+
+  <h2>Fread Peak Velocity Information</h2>
+  <p>The Fread velocity equation was provided by Danny Fread at a FLDWAV workshop held at OHD in November 2006.</p>
+  <p>Flood wave velocity associated with a dam breach is computed as follows:</p>
+  
+  <p style="text-align: center;">$$c = \left(\frac{0.005}{n}\right) \cdot H^{2/3} \cdot S^{1/2}$$</p>
+  
+  <p><strong>Where:</strong></p>
+  <ul>
+    <li><strong>\(c\)</strong> = Wave Speed (mi/hr)</li>
+    <li><strong>\(n\)</strong> = Manning's n</li>
+    <li><strong>\(H\)</strong> = Breach Head (ft) - defined as Depth of Water at time of Breaching</li>
+    <li><strong>\(S\)</strong> = Channel Bottom Slope (ft/mi)</li>
+  </ul>
+
+  <h3>Suggested Manning's "n" Values</h3>
+  <p>A brief sample of possible Manning's "n" values follow, extracted from <em>Chow, V.T., "Open Channel Hydraulics", McGraw-Hill, 1959</em>:</p>
+
+  <h4>Main Channels</h4>
+  <table>
+    <tr><th>Description</th><th>n Value</th></tr>
+    <tr><td>Clean, straight channel with no rifts or pools</td><td>0.030</td></tr>
+    <tr><td>Clean, winding, some pools and shoals</td><td>0.040</td></tr>
+    <tr><td>Clean, winding, with stones</td><td>0.050</td></tr>
+    <tr><td>Sluggish reaches, weedy, deep pools</td><td>0.070</td></tr>
+    <tr><td>Very weedy reaches, deep pools, floodways with heavy timber and underbrush</td><td>0.100</td></tr>
+  </table>
+
+  <h4>Flood Plains</h4>
+  <table>
+    <tr><th>Description</th><th>n Value</th></tr>
+    <tr><td>Pasture, no brush</td><td>0.030</td></tr>
+    <tr><td>Cultivated areas (no crops)</td><td>0.030</td></tr>
+    <tr><td>Cultivated areas (mature field crops)</td><td>0.040</td></tr>
+    <tr><td>Scattered brush with heavy weeds</td><td>0.050</td></tr>
+    <tr><td>Light brush and trees (winter)</td><td>0.050</td></tr>
+    <tr><td>Light brush and trees (summer)</td><td>0.060</td></tr>
+    <tr><td>Medium to dense brush (winter)</td><td>0.070</td></tr>
+    <tr><td>Medium to dense brush (summer)</td><td>0.100</td></tr>
+  </table>
+
+  <h4>Forest</h4>
+  <table>
+    <tr><th>Description</th><th>n Value</th></tr>
+    <tr><td>Dense willows, summer</td><td>0.150</td></tr>
+    <tr><td>Cleared land with tree stumps, no sprouts</td><td>0.040</td></tr>
+    <tr><td>Cleared land with tree stumps, heavy sprouts</td><td>0.060</td></tr>
+    <tr><td>Heavy timber stand, few downed trees, flood stage below branches</td><td>0.100</td></tr>
+    <tr><td>Heavy timber stand, few downed trees, flood stage reaching branches</td><td>0.120</td></tr>
+  </table>
+
+  <div class="footer">Additional information can be found in the document: "Guide for selecting Manning's Roughness Coefficients for Natural Channels and Flood Plains", by Arcement, G.J.Jr and Schneider, V.R., USGS Water-Supply Paper 2339.</div>
+
+</body>
+</html>
