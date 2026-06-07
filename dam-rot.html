@@ -85,7 +85,7 @@
             <tr>
                 <th>Method</th>
                 <th>Breach Width (ft)</th>
-                <th>Breach Time (min)</th>
+                <th>Breach Time (hr)</th>
                 <th>Peak Q (cfs)</th>
             </tr>
         </thead>
@@ -249,6 +249,9 @@
     document.getElementById('storageInput').value = getSafeNum('nid_storage', 'normal_storage', 'max_storage');
     document.getElementById('saInput').value = getSafeNum('sa');
 
+    document.getElementById('distanceInput').value = sessionStorage.getItem('damrot_distance') || "10.0";
+    document.getElementById('slopeInput').value = sessionStorage.getItem('damrot_slope') || "10.0";
+
     const rawType = getSafeStr('type', '').toLowerCase();
     const typeSel = document.getElementById('typeSelector');
     if (rawType.includes("arch")) {
@@ -274,7 +277,10 @@
     function calculateVelocities() {
         const h = parseFloat(document.getElementById('heightInput').value) || 0;
         const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
+
         const slope = parseFloat(document.getElementById('slopeInput').value) || 10;
+        sessionStorage.setItem('damrot_slope', document.getElementById('slopeInput').value);
+
         const n = parseFloat(document.getElementById('nInput').value) || 0.05;
 
         if (h <= 0 || distMax <= 0) {
@@ -297,7 +303,10 @@
     function calculateAll() {
         const h = parseFloat(document.getElementById('heightInput').value) || 0;
         const v = parseFloat(document.getElementById('storageInput').value) || 0;
+
         const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
+        sessionStorage.setItem('damrot_distance', document.getElementById('distanceInput').value);
+
         const type = document.getElementById('typeSelector').value;
         const failureMode = document.getElementById('failureModeSelector').value;
 
@@ -323,23 +332,23 @@
 
         // Froehlich
         const froBw = 3.28 * (0.1803 * (K * Math.pow(v_m3, 0.32) * Math.pow(h_m, 0.19)));
-        const froTc = 0.00254 * Math.pow(v_m3, 0.53) * Math.pow(h_m, -0.90) * 60;
+        const froTc = 0.00254 * Math.pow(v_m3, 0.53) * Math.pow(h_m, -0.90);
         const froQ = 0.607 * Math.pow(v_m3, 0.295) * Math.pow(h_m, 1.24) * 35.3147;
 
         document.getElementById('froBw').innerText = Math.round(froBw);
-        document.getElementById('froTc').innerText = froTc.toFixed(1);
+        document.getElementById('froTc').innerText = froTc.toFixed(2);
         document.getElementById('froQ').innerText = Math.round(froQ).toLocaleString();
 
         // SMPDBK
         let smpBw = (type === "arch") ? 90 : (type === "concrete" ? 5 * h : 3 * h);
-        let smpTc = (type === "arch") ? h / 50 : (type === "concrete" ? h / 40 : h / 10);
+        let smpTc = (type === "arch") ? h / 50 / 60 : (type === "concrete" ? h / 40 / 60 : h / 10 / 60);
         const saInput = parseFloat(document.getElementById('saInput').value);
         const sa = (saInput > 0) ? saInput : (2 * v / h);
         const smpdbk_const = (23.4 * sa) / smpBw;
         const smpQ = (3.1 * smpBw) * Math.pow((smpdbk_const / ((smpTc/60) + smpdbk_const / Math.pow(h, 0.5))), 3.0);
 
         document.getElementById('smpBw').innerText = Math.round(smpBw);
-        document.getElementById('smpTc').innerText = smpTc.toFixed(1);
+        document.getElementById('smpTc').innerText = smpTc.toFixed(2);
         document.getElementById('smpQ').innerText = Math.round(smpQ).toLocaleString();
 
         // POI Table Updates
