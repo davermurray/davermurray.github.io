@@ -341,7 +341,7 @@
 
         // SMPDBK
         let smpBw = (type === "arch") ? 90 : (type === "concrete" ? 5 * h : 3 * h);
-        let smpTc = (type === "arch") ? h / 50 / 60 : (type === "concrete" ? h / 40 / 60 : h / 10 / 60);
+        let smpTc = (type === "arch") ? h / 50 / 60 : (type === "concrete" ? h / 40 / 60 : h / 3 / 60);
         const saInput = parseFloat(document.getElementById('saInput').value);
         const sa = (saInput > 0) ? saInput : (2 * v / h);
         const smpdbk_const = (23.4 * sa) / smpBw;
