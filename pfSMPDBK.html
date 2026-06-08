@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.4;
+            font-size: 13px;
+            color: #333;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        h1 { font-size: 1.4em; }
+        h2 { font-size: 1.2em; }
+        h3 { font-size: 1.1em; }
+        h1, h2, h3 {
+            color: #111;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.2em;
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+        }
+        a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 20px;
+            font-style: italic;
+            font-size: 0.85em;
+            color: #666;
+            border-top: 1px solid #eaecef;
+            padding-top: 10px;
+        }
+        .note {
+            border-left: 4px solid #0366d6;
+            padding-left: 10px;
+            color: #555;
+            background-color: #f6f8fa;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            margin: 15px 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+        th {
+            background-color: #f6f8fa;
+            color: #24292e;
+        }
+    </style>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+    <a href="docs-index.html" class="back-link">&larr; Back to Main Menu</a>
+
+    <h2>SMPDBK Peak Outflow Information</h2>
+
+    <p>Peak outflow at the dam is computed with the falling head broad-crested weir flow equation used by the Simplified Dam Break Model (SMPDBK).</p>
+
+    <p style="text-align: center;">$$Q = 3.1B \cdot \left[ \frac{C}{(t/60) + (C/\sqrt{H})} \right]^3$$</p>
+
+    <p>Where the constant \(C\) is:</p>
+    <p style="text-align: center;">$$C = 23.4 \cdot \left( \frac{S}{B} \right)$$</p>
+
+    <p><strong>And:</strong></p>
+    <ul>
+        <li><strong>\(Q\)</strong> = Peak Outflow (cfs)</li>
+        <li><strong>\(S\)</strong> = Reservoir Surface Area (acre)</li>
+        <li><strong>\(t\)</strong> = Breach Time (min)</li>
+        <li><strong>\(B\)</strong> = Average Breach Width (ft)</li>
+        <li><strong>\(H\)</strong> = Breach Head (ft) - defined as Depth of Water at time of Breaching</li>
+    </ul>
+
+    <h3>Default Values</h3>
+    <p>Default values used by the SMPDBK can be estimated as follows:</p>
+    <ul>
+        <li><strong>Reservoir Surface Area:</strong> 2 &times; Reservoir Volume / dam height , unless provided</li>
+        <li><strong>Breach Head (H):</strong> Dam crest elevation &minus; the invert (bottom) elevation of the first (tailwater) cross section</li>
+        <li><strong>Breach Width:</strong> 3 &times; height of earthen dam <strong>OR</strong> 5 &times; height of gravity dam <strong>OR</strong> 90% height of concrete arch dam</li>
+        <li><strong>Breach Time:</strong> near 0 for concrete arch dam <strong>OR</strong> Breach Head (H) / 3 for earthen dams</li>
+    </ul>
+
+    <div class="footer">
+        Additional information can be found in the document "The NWS Simplified Dam-Break Flood forecasting model" by Wetmore J. and Fread, D.; revised in 1991 by Fread, D., Lewis, Janice and Wiele, S.
+    </div>
+
+</body>
+</html>

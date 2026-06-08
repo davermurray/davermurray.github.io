@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.4;
+            font-size: 13px;
+            color: #333;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        h1 { font-size: 1.4em; }
+        h2 { font-size: 1.2em; }
+        h3 { font-size: 1.1em; }
+        h1, h2, h3 {
+            color: #111;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.2em;
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+        }
+        a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 20px;
+            font-style: italic;
+            font-size: 0.85em;
+            color: #666;
+            border-top: 1px solid #eaecef;
+            padding-top: 10px;
+        }
+        .note {
+            border-left: 4px solid #0366d6;
+            padding-left: 10px;
+            color: #555;
+            background-color: #f6f8fa;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            margin: 15px 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f6f8fa;
+            color: #24292e;
+        }
+    </style>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+    <a href="docs-index.html" class="back-link">&larr; Back to Main Menu</a>
+
+    <h2>Ranges of possible values for Breach Characteristics</h2>
+
+    <p>Many federal agencies have published guidelines in the form of possible ranges of values for breach width, side slopes, and development time. The table below summarizes these guidelines, which should be used as minimum and maximum bounds for estimating breach parameters.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Dam Type</th>
+                <th>Average Breach Width (\(B_{ave}\))</th>
+                <th>Horizontal Component of Breach Side Slope (\(H:1V\))</th>
+                <th>Failure Time \(t_f\) (hrs)</th>
+                <th>Agency</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td rowspan="4"><strong>Earthen / Rockfill</strong></td>
+                <td>\((0.5 \text{ to } 3.0) \times H_D\)</td>
+                <td>0 to 1.0</td>
+                <td>0.5 to 4.0</td>
+                <td>COE 1980</td>
+            </tr>
+            <tr>
+                <td>\((1.0 \text{ to } 5.0) \times H_D\)</td>
+                <td>0 to 1.0</td>
+                <td>0.1 to 1.0</td>
+                <td>FERC</td>
+            </tr>
+            <tr>
+                <td>\((2.0 \text{ to } 5.0) \times H_D\)</td>
+                <td>0 to 1.0 (slightly larger)</td>
+                <td>0.1 to 1.0</td>
+                <td>NWS</td>
+            </tr>
+            <tr>
+                <td>\((0.5 \text{ to } 5.0) \times H_D\) *</td>
+                <td>0 to 1.0</td>
+                <td>0.1 to 4.0 *</td>
+                <td>COE 2007</td>
+            </tr>
+
+            <tr>
+                <td rowspan="4"><strong>Concrete Gravity</strong></td>
+                <td>Multiple Monoliths</td>
+                <td>Vertical</td>
+                <td>0.1 to 0.5</td>
+                <td>COE 1980</td>
+            </tr>
+            <tr>
+                <td>Usually \(\leq 0.5 L\)</td>
+                <td>Vertical</td>
+                <td>0.1 to 0.3</td>
+                <td>FERC</td>
+            </tr>
+            <tr>
+                <td>Usually \(\leq 0.5 L\)</td>
+                <td>Vertical</td>
+                <td>0.1 to 0.2</td>
+                <td>NWS</td>
+            </tr>
+            <tr>
+                <td>Multiple Monoliths</td>
+                <td>Vertical</td>
+                <td>0.1 to 0.5</td>
+                <td>COE 2007</td>
+            </tr>
+
+            <tr>
+                <td rowspan="4"><strong>Concrete Arch</strong></td>
+                <td>Entire Dam</td>
+                <td>Valley wall slope</td>
+                <td>\(\leq 0.1\)</td>
+                <td>COE 1980</td>
+            </tr>
+            <tr>
+                <td>Entire Dam</td>
+                <td>0 to valley walls</td>
+                <td>\(\leq 0.1\)</td>
+                <td>FERC</td>
+            </tr>
+            <tr>
+                <td>\((0.8 \times L) \text{ to } L\)</td>
+                <td>0 to valley walls</td>
+                <td>\(\leq 0.1\)</td>
+                <td>NWS</td>
+            </tr>
+            <tr>
+                <td>\((0.8 \times L) \text{ to } L\)</td>
+                <td>0 to valley walls</td>
+                <td>\(\leq 0.1\)</td>
+                <td>COE 2007</td>
+            </tr>
+
+            <tr>
+                <td rowspan="2"><strong>Slag / Refuse</strong></td>
+                <td>\((0.8 \times L) \text{ to } L\)</td>
+                <td>1.0 to 2.0</td>
+                <td>0.1 to 0.3</td>
+                <td>FERC</td>
+            </tr>
+            <tr>
+                <td>\((0.8 \times L) \text{ to } L\)</td>
+                <td>1.0 to 2.0</td>
+                <td>\(\leq 0.1\)</td>
+                <td>NWS</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><strong>Where:</strong></p>
+    <ul>
+        <li><strong>\(H_D\)</strong> = Height of the Dam</li>
+        <li><strong>\(L\)</strong> = Length of the Dam crest</li>
+    </ul>
+
+    <div class="note">
+        <strong>* Note:</strong> Dams that have very large volumes of water, and have long dam crest lengths, will continue to erode for long durations (i.e., as long as a significant amount of water is flowing through the breach), and may therefore have longer breach widths and times than what is shown in the table.
+    </div>
+
+    <div class="footer">
+        Reference: Adapted from Table 13-3 in the [HEC-RAS Hydraulic Reference Manual](https://www.hec.usace.army.mil/confluence/rasdocs/ras1dtechref/latest/performing-a-dam-break-study-with-hec-ras/estimating-dam-breach-parameters/estimating-breach-parameters) (USACE). Original compilation heavily extracted from the comprehensive historical summary report, "Prediction of Embankment Dam Breach Parameters" by Wahl, T. L. (1998), U.S. Bureau of Reclamation.
+    </div>
+
+</body>
+</html>
