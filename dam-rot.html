@@ -21,428 +21,420 @@
         th, td { border: 1px solid #dee2e6; padding: 6px; text-align: center; }
         th { background: #f1f3f5; }
         .chart-container { position: relative; height: 200px; width: 100%; margin-top: 10px; }
-        .legend-custom { font-size: 0.75em; display: flex; justify-content: center; gap: 15px; margin-top: 5px; }
-        .input-row { display: flex; gap: 15px;  width: 100%; margin-bottom: 10px; }
+        .input-row { display: flex; gap: 15px; width: 100%; margin-bottom: 10px; }
         .input-row .input-group { flex: 1; margin-bottom: 0; }
+        .table-select { width: 100%; box-sizing: border-box; padding: 2px 4px; font-weight: bold; font-size: 0.9em; cursor: pointer; color: #333; }
     </style>
 </head>
 <body>
-
-<div class="card">
-   <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 15px;">
-    <h3 id="damName" style="margin: 0;">Loading...</h3>
-    <span id="nidId" style="color: #666; font-size: 0.8em;"></span>
-    </div>
-   <div class="input-row">
-    <div class="input-group">
-        <label>Dam Type</label>
-        <select id="typeSelector" onchange="calculateAll()">
-            <option value="earthen">Earth/Embankment</option>
-            <option value="concrete">Concrete/Gravity</option>
-            <option value="arch">Arch</option>
-        </select>
-    </div>
-    <div class="input-group">
-        <label>Failure Mode</label>
-        <select id="failureModeSelector" onchange="calculateAll()">
-            <option value="overtopping">Overtopping</option>
-            <option value="piping">Piping</option>
-        </select>
-    </div>
-</div>
-<div class ="input-row">
-    <div class="input-group">
-        <label>Breach Head (ft)</label>
-        <input type="number" id="heightInput" oninput="calculateAll()">
-        <select id="heightSource" class="source-select" onchange="applySource('height')">
-            <option value="">-- Change Height Source --</option>
-            <option value="hydraulic">Hydraulic Height</option>
-            <option value="nid_height">NID Height</option>
-            <option value="structural">Structural Height</option>
-        </select>
-    </div>
-
-    <div class="input-group">
-        <label>Storage (ac-ft)</label>
-        <input type="number" id="storageInput" oninput="calculateAll()">
-        <select id="storageSource" class="source-select" onchange="applySource('storage')">
-            <option value="">-- Change Storage Source --</option>
-            <option value="nid_storage">NID Storage</option>
-            <option value="max_storage">Max Storage</option>
-            <option value="normal_storage">Normal Storage</option>
-        </select>
-    </div>
-    <div class="input-group">
-        <label>Surface Area (ac)</label>
-        <input type="number" id="saInput" placeholder="Auto-calc" oninput="calculateAll()">
-    </div>
-</div>
-<div style="margin-top: 15px; color: #333; font-size: 0.80rem;">
-    <b>Estimates at the Dam</b> - Initial Wave Height (40%): <b><span id="initialDepth" style="color: blue;">--</span> </b>ft
-</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Method</th>
-                <th>Breach Width (ft)</th>
-                <th>Breach Time (hr)</th>
-                <th>Peak Q (cfs)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr style="color: #007bff;">
-                <td>Froehlich</td>
-                <td id="froBw">--</td>
-                <td id="froTc">--</td>
-                <td id="froQ">--</td>
-            </tr>
-            <tr style="color: #dc3545;">
-                <td>SMPDBK</td>
-                <td id="smpBw">--</td>
-                <td id="smpTc">--</td>
-                <td id="smpQ">--</td>
-            </tr>
-        </tbody>
-    </table>
-
-  <div class="input-group" style="margin-top: 20px; display: flex; align-items: center; gap: 10px;">
-    <label style="margin-bottom: 0; white-space: nowrap;">Distance to Point of Interest (POI):</label>
-    <input type="number" id="distanceInput" value="10.0" oninput="calculateAll()" style="width: 60px; text-align: right;">
-    <label style="margin-bottom: 0; white-space: nowrap; margin-left: 0;">Miles</label>
-  </div>
-<!--<div style="margin-top: 15px; color: #333; font-size: 0.80rem;">
-<b>Estimates at the POI Distance</b>
-</div>-->
-    <table>
-        <thead>
-            <tr>
-                <th>Method</th>
-                <th>Peak Q at POI (cfs)</th>
-                <th>Depth at POI (ft)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr style="color: #007bff;">
-                <td>Froehlich</td>
-                <td id="froQPOI">--</td>
-                <td id="froDepth">--</td>
-            </tr>
-            <tr style="color: #dc3545;">
-                <td>SMPDBK</td>
-                <td id="smpQPOI">--</td>
-                <td id="smpDepth">--</td>
-            </tr>
-        </tbody>
-    </table>
-    <div class="chart-container">
-        <canvas id="routingChart"></canvas>
-    </div>
-    <div class="legend-custom">
-        <span><b style="color:#007bff;">—</b> Froehlich</span>
-        <span><b style="color:#dc3545;">—</b> SMPDBK</span>
-    </div>
-    <div style="margin-top: 15px; color: #333; font-size: 0.80rem;">
-    <b>Travel Times to POI</b>
-    </div>
-
-    <div class="stats-grid-3" style="margin-top: 5px;">
-    <div class="stat-box">
-        <div class="stat-label">Valley <br> (3.5 avg mph)</div>
-       <div id="time_valley" class="stat-value">--</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Foothills <br>(6.0 avg mph)</div>
-        <div id="time_foothills" class="stat-value">--</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Mountainous <br>(9.0 avg mph)</div>
-       <div id="time_mountain" class="stat-value">--</div>
-    </div>
-
-</div>
-    <div class="stats-grid" style="margin-top: 20px;">
-        <div class="input-group" style="margin-bottom:0;">
-            <label>Channel Slope (ft/mi)</label>
-            <input type="number" id="slopeInput" value="10.0" step="0.1" oninput="calculateVelocities()">
+    <div class="card">
+        <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 15px;">
+            <h3 id="damName" style="margin: 0;">Loading...</h3>
+            <span id="nidId" style="color: #666; font-size: 0.8em;"></span>
         </div>
-        <div class="input-group" style="margin-bottom:0;">
-            <label>Manning's n</label>
-            <input type="number" id="nInput" value="0.05" step="0.01" oninput="calculateVelocities()">
+
+        <div class="input-row">
+            <div class="input-group">
+                <label>Dam Type</label>
+                <select id="typeSelector" onchange="onDamTypeChange()">
+                    <option value="earthen">Earth/Embankment</option>
+                    <option value="concrete">Concrete/Gravity</option>
+                    <option value="arch">Arch</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Failure Mode</label>
+                <select id="failureModeSelector" onchange="calculateAll()">
+                    <option value="overtopping">Overtopping</option>
+                    <option value="piping">Piping</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="input-row">
+            <div class="input-group">
+                <label>Breach Head (ft)</label>
+                <input type="number" id="heightInput" oninput="calculateAll()">
+                <select id="heightSource" class="source-select" onchange="applySource('height')">
+                    <option value="">-- Change Height Source --</option>
+                    <option value="hydraulic">Hydraulic Height</option>
+                    <option value="nid_height">NID Height</option>
+                    <option value="structural">Structural Height</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Storage (ac-ft)</label>
+                <input type="number" id="storageInput" oninput="calculateAll()">
+                <select id="storageSource" class="source-select" onchange="applySource('storage')">
+                    <option value="">-- Change Storage Source --</option>
+                    <option value="nid_storage">NID Storage</option>
+                    <option value="max_storage">Max Storage</option>
+                    <option value="normal_storage">Normal Storage</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Surface Area (ac)</label>
+                <input type="number" id="saInput" placeholder="Auto-calc" oninput="calculateAll()">
+            </div>
+        </div>
+
+        <div style="margin-top: 15px; color: #333; font-size: 0.80rem;">
+            <b>Estimates at the Dam</b> - Initial Wave Height (40%): <b><span id="initialDepth" style="color: #007bff;">--</span></b> ft
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Method</th>
+                    <th>Breach Width (ft)</th>
+                    <th>Breach Time (hr)</th>
+                    <th>Peak Q (cfs)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr id="activeMethodRow">
+                    <td>
+                        <select id="methodSelector" class="table-select" onchange="calculateAll()">
+                            <option value="froehlich">Froehlich</option>
+                            <option value="smpdbk">SMPDBK</option>
+                        </select>
+                    </td>
+                    <td id="calcBw" style="font-weight: bold;">--</td>
+                    <td id="calcTc" style="font-weight: bold;">--</td>
+                    <td id="calcQ" style="font-weight: bold;">--</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="input-group" style="margin-top: 20px; display: flex; align-items: center; gap: 10px;">
+            <label style="margin-bottom: 0; white-space: nowrap;">Distance to Point of Interest (POI):</label>
+            <input type="number" id="distanceInput" value="10.0" oninput="calculateAll()" style="width: 60px; text-align: right;">
+            <label style="margin-bottom: 0; white-space: nowrap; margin-left: 0;">Miles</label>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Peak Q at POI (cfs)</th>
+                    <th>Depth at POI (ft)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr id="poiRow">
+                    <td id="poiQ" style="font-weight:bold;">--</td>
+                    <td id="poiDepth" style="font-weight:bold;">--</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="chart-container">
+            <canvas id="routingChart"></canvas>
+        </div>
+
+        <div style="margin-top: 15px; color: #333; font-size: 0.80rem;">
+            <b>Travel Times to POI</b>
+        </div>
+        <div class="stats-grid-3" style="margin-top: 5px;">
+            <div class="stat-box">
+                <div class="stat-label">Valley <br> (3.5 avg mph)</div>
+                <div id="time_valley" class="stat-value">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Foothills <br>(6.0 avg mph)</div>
+                <div id="time_foothills" class="stat-value">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Mountainous <br>(9.0 avg mph)</div>
+                <div id="time_mountain" class="stat-value">--</div>
+            </div>
+        </div>
+
+        <div class="stats-grid" style="margin-top: 20px;">
+            <div class="input-group" style="margin-bottom:0;">
+                <label>Channel Slope (ft/mi)</label>
+                <input type="number" id="slopeInput" value="10.0" step="0.1" oninput="calculateVelocities()">
+            </div>
+            <div class="input-group" style="margin-bottom:0;">
+                <label>Manning's n</label>
+                <input type="number" id="nInput" value="0.05" step="0.01" oninput="calculateVelocities()">
+            </div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">Fread Velocity</div>
+                <div id="fread_val" class="stat-value">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Fread Travel Time</div>
+                <div id="travel_time" class="stat-value">--</div>
+            </div>
         </div>
     </div>
 
-   <div class="stats-grid">
-    <div class="stat-box">
-        <div class="stat-label">Fread Velocity</div>
-        <div id="fread_val" class="stat-value">--</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-label">Fread Travel Time</div>
-        <div id="travel_time" class="stat-value">--</div>
-    </div>
-    </div>
-</div>
+    <script>
+        let routingChart = null;
+        let fullString = window.location.search + window.location.hash;
+        const params = new URLSearchParams(fullString.replace('#', '%23'));
 
-<script>
-    let routingChart = null;
-    // Grab both the search string and the hash fragment that got cut off
-    let fullString = window.location.search + window.location.hash;
-    // Safely encode the rogue hashtag so the parameters don't break
-    const params = new URLSearchParams(fullString.replace('#', '%23'));
+        // --- SAFETY CHECK & MEMORY FUNCTIONS ---
+        let nameMatch = fullString.match(/[?&]name=(.*?)(?=&nidid=|$)/);
+        let rawName = nameMatch ? decodeURIComponent(nameMatch[1]) : null;
+        let isDeselected = (!rawName || rawName === "null" || rawName.trim() === "" || rawName.includes("{"));
 
-    // --- SAFETY CHECK & MEMORY FUNCTIONS ---
-    let nameMatch = fullString.match(/[?&]name=(.*?)(?=&nidid=|$)/);
-    let rawName = nameMatch ? decodeURIComponent(nameMatch[1]) : null;
-
-    let isDeselected = (!rawName || rawName === "null" || rawName.trim() === "" || rawName.includes("{"));
-
-    function getSafeStr(paramName, defaultStr = "--") {
-        if (isDeselected) {
-            let memVal = sessionStorage.getItem('damrot_' + paramName);
-            return (memVal && memVal !== "") ? memVal : defaultStr;
-        } else {
-            let val = params.get(paramName);
-            let cleanVal = (val && val !== "null" && val.trim() !== "") ? val : "";
-            sessionStorage.setItem('damrot_' + paramName, cleanVal);
-            return cleanVal || defaultStr;
-        }
-    }
-
-    function getSafeNum(...paramNames) {
-        if (isDeselected) {
-            for (let p of paramNames) {
-                let memVal = sessionStorage.getItem('damrot_' + p);
-                if (memVal && memVal !== "") {
-                    // Strip commas before parsing
-                    let num = parseFloat(memVal.replace(/,/g, ''));
-                    if (!isNaN(num)) return num;
-                }
-            }
-            return 0;
-        } else {
-            let validNum = 0;
-            let found = false;
-            for (let p of paramNames) {
-                let val = params.get(p);
+        function getSafeStr(paramName, defaultStr = "--") {
+            if (isDeselected) {
+                let memVal = sessionStorage.getItem('damrot_' + paramName);
+                return (memVal && memVal !== "") ? memVal : defaultStr;
+            } else {
+                let val = params.get(paramName);
                 let cleanVal = (val && val !== "null" && val.trim() !== "") ? val : "";
-                sessionStorage.setItem('damrot_' + p, cleanVal);
+                sessionStorage.setItem('damrot_' + paramName, cleanVal);
+                return cleanVal || defaultStr;
+            }
+        }
 
-                if (!found && cleanVal !== "") {
-                    // Strip commas before parsing
-                    let num = parseFloat(cleanVal.replace(/,/g, ''));
-                    if (!isNaN(num)) {
-                        validNum = num;
-                        found = true;
+        function getSafeNum(...paramNames) {
+            if (isDeselected) {
+                for (let p of paramNames) {
+                    let memVal = sessionStorage.getItem('damrot_' + p);
+                    if (memVal && memVal !== "") {
+                        let num = parseFloat(memVal.replace(/,/g, ''));
+                        if (!isNaN(num)) return num;
                     }
                 }
+                return 0;
+            } else {
+                let validNum = 0;
+                let found = false;
+                for (let p of paramNames) {
+                    let val = params.get(p);
+                    let cleanVal = (val && val !== "null" && val.trim() !== "") ? val : "";
+                    sessionStorage.setItem('damrot_' + p, cleanVal);
+                    if (!found && cleanVal !== "") {
+                        let num = parseFloat(cleanVal.replace(/,/g, ''));
+                        if (!isNaN(num)) {
+                            validNum = num;
+                            found = true;
+                        }
+                    }
+                }
+                return validNum;
             }
-            return validNum;
         }
-    }
-    // ------------------------------
 
-    // --- INITIAL DATA LOAD FROM URL ---
-    document.getElementById('damName').innerText = getSafeStr('name', 'Selected Dam');
-    document.getElementById('nidId').innerText = "NID: " + getSafeStr('nidid', '--');
+        // --- INITIAL DATA LOAD FROM URL ---
+        document.getElementById('damName').innerText = getSafeStr('name', 'Selected Dam');
+        document.getElementById('nidId').innerText = "NID: " + getSafeStr('nidid', '--');
+        document.getElementById('heightInput').value = getSafeNum('hydraulic', 'nid_height', 'structural');
+        document.getElementById('storageInput').value = getSafeNum('nid_storage', 'normal_storage', 'max_storage');
+        document.getElementById('saInput').value = getSafeNum('sa');
+        document.getElementById('distanceInput').value = sessionStorage.getItem('damrot_distance') || "10.0";
+        document.getElementById('slopeInput').value = sessionStorage.getItem('damrot_slope') || "10.0";
 
-    document.getElementById('heightInput').value = getSafeNum('hydraulic', 'nid_height', 'structural');
-    document.getElementById('storageInput').value = getSafeNum('nid_storage', 'normal_storage', 'max_storage');
-    document.getElementById('saInput').value = getSafeNum('sa');
-
-    document.getElementById('distanceInput').value = sessionStorage.getItem('damrot_distance') || "10.0";
-    document.getElementById('slopeInput').value = sessionStorage.getItem('damrot_slope') || "10.0";
-
-    const rawType = getSafeStr('type', '').toLowerCase();
-    const typeSel = document.getElementById('typeSelector');
-    if (rawType.includes("arch")) {
-        typeSel.value = "arch";
-    } else if (rawType.includes("concrete") || rawType.includes("gravity")) {
-        typeSel.value = "concrete";
-    } else {
-        typeSel.value = "earthen";
-    }
-    // ----------------------------------
-
-    function applySource(type) {
-        if (type === 'height') {
-            const field = document.getElementById('heightSource').value;
-            if (field) document.getElementById('heightInput').value = getSafeNum(field);
+        const rawType = getSafeStr('type', '').toLowerCase();
+        const typeSel = document.getElementById('typeSelector');
+        if (rawType.includes("arch")) {
+            typeSel.value = "arch";
+        } else if (rawType.includes("concrete") || rawType.includes("gravity")) {
+            typeSel.value = "concrete";
         } else {
-            const field = document.getElementById('storageSource').value;
-            if (field) document.getElementById('storageInput').value = getSafeNum(field);
-        }
-        calculateAll();
-    }
-
-    function calculateVelocities() {
-        const h = parseFloat(document.getElementById('heightInput').value) || 0;
-        const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
-
-        const slope = parseFloat(document.getElementById('slopeInput').value) || 10;
-        sessionStorage.setItem('damrot_slope', document.getElementById('slopeInput').value);
-
-        const n = parseFloat(document.getElementById('nInput').value) || 0.05;
-
-        if (h <= 0 || distMax <= 0) {
-            ['fread_val', 'travel_time', 'time_valley', 'time_foothills', 'time_mountain'].forEach(id => {
-                document.getElementById(id).innerText = "--";
-            });
-            return;
+            typeSel.value = "earthen";
         }
 
-        const vFread = (0.005 / n) * Math.pow(h, (2/3)) * Math.pow(slope, 0.5);
-        document.getElementById('fread_val').innerText = vFread.toFixed(1) + " mph";
-        document.getElementById('travel_time').innerText = (distMax / vFread).toFixed(1) + " hrs";
-
-        // Terrain Estimates
-        document.getElementById('time_valley').innerText = (distMax / 3.5).toFixed(1) + " hrs";
-        document.getElementById('time_foothills').innerText = (distMax / 6.0).toFixed(1) + " hrs";
-        document.getElementById('time_mountain').innerText = (distMax / 9.0).toFixed(1) + " hrs";
-    }
-
-    function calculateAll() {
-        const h = parseFloat(document.getElementById('heightInput').value) || 0;
-        const v = parseFloat(document.getElementById('storageInput').value) || 0;
-
-        const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
-        sessionStorage.setItem('damrot_distance', document.getElementById('distanceInput').value);
-
-        const type = document.getElementById('typeSelector').value;
-        const failureMode = document.getElementById('failureModeSelector').value;
-
-        if (h <= 0 || v <= 0) {
-            // Reset fields
-            document.getElementById('initialDepth').innerText = "--";
-            ['froBw', 'froTc', 'froQ', 'smpBw', 'smpTc', 'smpQ', 'froDepth', 'smpDepth', 'froQPOI', 'smpQPOI'].forEach(id => {
-                document.getElementById(id).innerText = "--";
-            });
-            if (routingChart) { routingChart.destroy(); routingChart = null; }
-            calculateVelocities();
-            return;
-        }
-
-        // Initial 40% depth
-        const initD = (h * 0.4).toFixed(1);
-        document.getElementById('initialDepth').innerText = initD;
-
-        // Math Conversions
-        const v_m3 = v * 1233.48;
-        const h_m = h * 0.3048;
-        const K = (failureMode === "piping") ? 1.0 : 1.4;
-
-        // Froehlich
-        const froBw = 3.28 * (0.1803 * (K * Math.pow(v_m3, 0.32) * Math.pow(h_m, 0.19)));
-        const froTc = 0.00254 * Math.pow(v_m3, 0.53) * Math.pow(h_m, -0.90);
-        const froQ = 0.607 * Math.pow(v_m3, 0.295) * Math.pow(h_m, 1.24) * 35.3147;
-
-        document.getElementById('froBw').innerText = Math.round(froBw);
-        document.getElementById('froTc').innerText = froTc.toFixed(2);
-        document.getElementById('froQ').innerText = Math.round(froQ).toLocaleString();
-
-        // SMPDBK
-        let smpBw = (type === "arch") ? 90 : (type === "concrete" ? 5 * h : 3 * h);
-        let smpTc = (type === "arch") ? h / 50 / 60 : (type === "concrete" ? h / 40 / 60 : h / 3 / 60);
-        const saInput = parseFloat(document.getElementById('saInput').value);
-        const sa = (saInput > 0) ? saInput : (2 * v / h);
-        const smpdbk_const = (23.4 * sa) / smpBw;
-        const smpQ = (3.1 * smpBw) * Math.pow((smpdbk_const / ((smpTc/60) + smpdbk_const / Math.pow(h, 0.5))), 3.0);
-
-        document.getElementById('smpBw').innerText = Math.round(smpBw);
-        document.getElementById('smpTc').innerText = smpTc.toFixed(2);
-        document.getElementById('smpQ').innerText = Math.round(smpQ).toLocaleString();
-
-        // POI Table Updates
-        const poiDepth = Math.pow(10, (Math.log10(h * 0.4) - 0.03 * distMax)).toFixed(1);
-        document.getElementById('froDepth').innerText = poiDepth;
-        document.getElementById('smpDepth').innerText = poiDepth;
-        document.getElementById('froQPOI').innerText = Math.round(Math.pow(10, (Math.log10(froQ) - 0.03 * distMax))).toLocaleString();
-        document.getElementById('smpQPOI').innerText = Math.round(Math.pow(10, (Math.log10(smpQ) - 0.03 * distMax))).toLocaleString();
-
-        // Routing Logic for Chart
-        let labels = [];
-        let froData = [];
-        let smpData = [];
-        let depthData = [];
-
-        for (let m = 0; m <= distMax; m += 0.5) {
-            labels.push(m);
-            froData.push(Math.round(Math.pow(10, (Math.log10(froQ) - 0.03 * m))));
-            smpData.push(Math.round(Math.pow(10, (Math.log10(smpQ) - 0.03 * m))));
-            depthData.push(Math.pow(10, (Math.log10(h * 0.4) - 0.03 * m)).toFixed(1));
-        }
-
-        updateChart(labels, froData, smpData, depthData);
-        calculateVelocities();
-    }
-
-    function updateChart(labels, froData, smpData, depthData) {
-        const ctx = document.getElementById('routingChart').getContext('2d');
-        if (routingChart) routingChart.destroy();
-
-        routingChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Froehlich',
-                        data: froData,
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.05)',
-                        fill: true,
-                        pointRadius: 1,
-                        tension: 0.2
-                    },
-                    {
-                        label: 'SMPDBK',
-                        data: smpData,
-                        borderColor: '#dc3545',
-                        backgroundColor: 'rgba(220, 53, 69, 0.05)',
-                        fill: true,
-                        pointRadius: 0,
-                        tension: 0.2
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                        // 1. Adds " miles" to the top of the tooltip
-                        title: function(tooltipItems) {
-                            return tooltipItems[0].label + ' miles';
-                        },
-                        // 2. Formats the discharge values with commas
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) { label += ': '; }
-                            if (context.parsed.y !== null) {
-                                label += new Intl.NumberFormat().format(context.parsed.y) + ' cfs';
-                            }
-                            return label;
-                        },
-                        // 3. Adds the Depth line at the bottom
-                        footer: function(tooltipItems) {
-                            const index = tooltipItems[0].dataIndex;
-                            const depth = depthData[index];
-                            return 'Est. Depth: ' + depth + ' ft';
-                        }
-                        }
-                    }
-                },
-                scales: {
-                    y: { title: { display: true, text: 'Discharge (cfs)', font: { size: 10 } } },
-                    x: { title: { display: true, text: 'Miles Downstream', font: { size: 10 } } }
-                }
+        function applySource(type) {
+            if (type === 'height') {
+                const field = document.getElementById('heightSource').value;
+                if (field) document.getElementById('heightInput').value = getSafeNum(field);
+            } else {
+                const field = document.getElementById('storageSource').value;
+                if (field) document.getElementById('storageInput').value = getSafeNum(field);
             }
-        });
-    }
+            calculateAll();
+        }
 
-    calculateAll();
-</script>
+        function onDamTypeChange() {
+            const type = document.getElementById('typeSelector').value;
+            if (type === 'earthen') {
+                document.getElementById('methodSelector').value = 'froehlich';
+            } else {
+                document.getElementById('methodSelector').value = 'smpdbk';
+            }
+            calculateAll();
+        }
+
+        function calculateVelocities() {
+            const h = parseFloat(document.getElementById('heightInput').value) || 0;
+            const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
+            const slope = parseFloat(document.getElementById('slopeInput').value) || 10;
+            sessionStorage.setItem('damrot_slope', document.getElementById('slopeInput').value);
+            const n = parseFloat(document.getElementById('nInput').value) || 0.05;
+
+            if (h <= 0 || distMax <= 0) {
+                ['fread_val', 'travel_time', 'time_valley', 'time_foothills', 'time_mountain'].forEach(id => {
+                    document.getElementById(id).innerText = "--";
+                });
+                return;
+            }
+
+            const vFread = (0.005 / n) * Math.pow(h, (2/3)) * Math.pow(slope, 0.5);
+            document.getElementById('fread_val').innerText = vFread.toFixed(1) + " mph";
+            document.getElementById('travel_time').innerText = (distMax / vFread).toFixed(1) + " hrs";
+
+            document.getElementById('time_valley').innerText = (distMax / 3.5).toFixed(1) + " hrs";
+            document.getElementById('time_foothills').innerText = (distMax / 6.0).toFixed(1) + " hrs";
+            document.getElementById('time_mountain').innerText = (distMax / 9.0).toFixed(1) + " hrs";
+        }
+
+        function calculateAll() {
+            const h = parseFloat(document.getElementById('heightInput').value) || 0;
+            const v = parseFloat(document.getElementById('storageInput').value) || 0;
+            const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
+            sessionStorage.setItem('damrot_distance', document.getElementById('distanceInput').value);
+
+            const type = document.getElementById('typeSelector').value;
+            const failureMode = document.getElementById('failureModeSelector').value;
+            const activeMethod = document.getElementById('methodSelector').value;
+            const isFroActive = (activeMethod === "froehlich");
+
+            if (h <= 0 || v <= 0) {
+                document.getElementById('initialDepth').innerText = "--";
+                ['calcBw', 'calcTc', 'calcQ', 'poiDepth', 'poiQ'].forEach(id => {
+                    let el = document.getElementById(id);
+                    if(el) el.innerText = "--";
+                });
+                document.getElementById('activeMethodRow').style.color = 'inherit';
+                document.getElementById('poiRow').style.color = 'inherit';
+                if (routingChart) {
+                    routingChart.destroy();
+                    routingChart = null;
+                }
+                calculateVelocities();
+                return;
+            }
+
+            // Set font colors to blue to match the chart when populated
+            document.getElementById('activeMethodRow').style.color = '#007bff';
+            document.getElementById('poiRow').style.color = '#007bff';
+
+            const initD = (h * 0.4).toFixed(1);
+            document.getElementById('initialDepth').innerText = initD;
+
+            const v_m3 = v * 1233.48;
+            const h_m = h * 0.3048;
+            const K = (failureMode === "piping") ? 1.0 : 1.4;
+
+            // Froehlich Math
+            const froBw = 3.28 * (0.1803 * (K * Math.pow(v_m3, 0.32) * Math.pow(h_m, 0.19)));
+            const froTc = 0.00254 * Math.pow(v_m3, 0.53) * Math.pow(h_m, -0.90);
+            const froQ = 0.607 * Math.pow(v_m3, 0.295) * Math.pow(h_m, 1.24) * 35.3147;
+
+            // SMPDBK Math
+            let smpBw = (type === "arch") ? 90 : (type === "concrete" ? 5 * h : 3 * h);
+            let smpTc = (type === "arch") ? h / 50 / 60 : (type === "concrete" ? h / 40 / 60 : h / 3 / 60);
+            const saInput = parseFloat(document.getElementById('saInput').value);
+            const sa = (saInput > 0) ? saInput : (2 * v / h);
+            const smpdbk_const = (23.4 * sa) / smpBw;
+            const smpQ = (3.1 * smpBw) * Math.pow((smpdbk_const / ((smpTc/60) + smpdbk_const / Math.pow(h, 0.5))), 3.0);
+
+            // Populate the active row data
+            let methodName = "";
+            let activeQForRouting = 0;
+
+            if (isFroActive) {
+                methodName = "Froehlich";
+                activeQForRouting = froQ;
+                document.getElementById('calcBw').innerText = Math.round(froBw);
+                document.getElementById('calcTc').innerText = froTc.toFixed(2);
+                document.getElementById('calcQ').innerText = Math.round(froQ).toLocaleString();
+                document.getElementById('poiQ').innerText = Math.round(Math.pow(10, (Math.log10(froQ) - 0.03 * distMax))).toLocaleString();
+            } else {
+                methodName = "SMPDBK";
+                activeQForRouting = smpQ;
+                document.getElementById('calcBw').innerText = Math.round(smpBw);
+                document.getElementById('calcTc').innerText = smpTc.toFixed(2);
+                document.getElementById('calcQ').innerText = Math.round(smpQ).toLocaleString();
+                document.getElementById('poiQ').innerText = Math.round(Math.pow(10, (Math.log10(smpQ) - 0.03 * distMax))).toLocaleString();
+            }
+
+            // Standard Depth Computation
+            const poiDepth = Math.pow(10, (Math.log10(h * 0.4) - 0.03 * distMax)).toFixed(1);
+            document.getElementById('poiDepth').innerText = poiDepth;
+
+            // Routing Logic for Chart (Active Only)
+            let labels = [];
+            let activeData = [];
+            let depthData = [];
+
+            for (let m = 0; m <= distMax; m += 0.5) {
+                labels.push(m);
+                activeData.push(Math.round(Math.pow(10, (Math.log10(activeQForRouting) - 0.03 * m))));
+                depthData.push(Math.pow(10, (Math.log10(h * 0.4) - 0.03 * m)).toFixed(1));
+            }
+
+            updateChart(labels, activeData, depthData, methodName);
+            calculateVelocities();
+        }
+
+        function updateChart(labels, activeData, depthData, methodName) {
+            const ctx = document.getElementById('routingChart').getContext('2d');
+            if (routingChart) routingChart.destroy();
+
+            routingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: methodName,
+                            data: activeData,
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0, 123, 255, 0.05)',
+                            fill: true,
+                            pointRadius: 1.5,
+                            borderWidth: 2,
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return tooltipItems[0].label + ' miles';
+                                },
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat().format(context.parsed.y) + ' cfs';
+                                    }
+                                    return label;
+                                },
+                                footer: function(tooltipItems) {
+                                    const index = tooltipItems[0].dataIndex;
+                                    const depth = depthData[index];
+                                    return 'Est. Depth: ' + depth + ' ft';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { title: { display: true, text: 'Discharge (cfs)', font: { size: 10 } } },
+                        x: { title: { display: true, text: 'Miles Downstream', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        onDamTypeChange();
+    </script>
 </body>
 </html>
