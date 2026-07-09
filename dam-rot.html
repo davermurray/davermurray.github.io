@@ -142,15 +142,15 @@
         </div>
         <div class="stats-grid-3" style="margin-top: 5px;">
             <div class="stat-box">
-                <div class="stat-label">Valley <br> (3.5 avg mph)</div>
+                <div class="stat-label">Valley <br> (3 - 4 mph)</div>
                 <div id="time_valley" class="stat-value">--</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Foothills <br>(6.0 avg mph)</div>
+                <div class="stat-label">Foothills <br>(5 - 7 mph)</div>
                 <div id="time_foothills" class="stat-value">--</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Mountainous <br>(9.0 avg mph)</div>
+                <div class="stat-label">Mountainous <br>(8 - 10 mph)</div>
                 <div id="time_mountain" class="stat-value">--</div>
             </div>
         </div>
@@ -235,7 +235,7 @@
         document.getElementById('storageInput').value = getSafeNum('nid_storage', 'normal_storage', 'max_storage');
         document.getElementById('saInput').value = getSafeNum('sa');
         document.getElementById('distanceInput').value = sessionStorage.getItem('damrot_distance') || "10.0";
-        document.getElementById('slopeInput').value = sessionStorage.getItem('damrot_slope') || "10.0";
+        document.getElementById('slopeInput').value = sessionStorage.getItem('damrot_slope') || "50.0";
 
         const rawType = getSafeStr('type', '').toLowerCase();
         const typeSel = document.getElementById('typeSelector');
@@ -273,7 +273,7 @@
             const distMax = parseFloat(document.getElementById('distanceInput').value) || 1;
             const slope = parseFloat(document.getElementById('slopeInput').value) || 10;
             sessionStorage.setItem('damrot_slope', document.getElementById('slopeInput').value);
-            const n = parseFloat(document.getElementById('nInput').value) || 0.05;
+            const n = parseFloat(document.getElementById('nInput').value) || 0.1;
 
             if (h <= 0 || distMax <= 0) {
                 ['fread_val', 'travel_time', 'time_valley', 'time_foothills', 'time_mountain'].forEach(id => {
@@ -286,9 +286,9 @@
             document.getElementById('fread_val').innerText = vFread.toFixed(1) + " mph";
             document.getElementById('travel_time').innerText = (distMax / vFread).toFixed(1) + " hrs";
 
-            document.getElementById('time_valley').innerText = (distMax / 3.5).toFixed(1) + " hrs";
-            document.getElementById('time_foothills').innerText = (distMax / 6.0).toFixed(1) + " hrs";
-            document.getElementById('time_mountain').innerText = (distMax / 9.0).toFixed(1) + " hrs";
+            document.getElementById('time_valley').innerText = (distMax / 3).toFixed(1) +" - "+(distMax / 4).toFixed(1) + " hrs";
+            document.getElementById('time_foothills').innerText = (distMax / 5).toFixed(1) +" - "+(distMax / 7).toFixed(1) + " hrs";
+            document.getElementById('time_mountain').innerText = (distMax / 8).toFixed(1) +" - "+(distMax / 10).toFixed(1) + " hrs";
         }
 
         function calculateAll() {
