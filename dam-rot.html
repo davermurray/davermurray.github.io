@@ -179,13 +179,15 @@
 
     <script>
         let routingChart = null;
+                // --- SAFETY CHECK & MEMORY FUNCTIONS ---
         let fullString = window.location.search + window.location.hash;
         const params = new URLSearchParams(fullString.replace('#', '%23'));
 
-        // --- SAFETY CHECK & MEMORY FUNCTIONS ---
-        let nameMatch = fullString.match(/[?&]name=(.*?)(?=&nidid=|$)/);
-        let rawName = nameMatch ? decodeURIComponent(nameMatch[1]) : null;
-        let isDeselected = (!rawName || rawName === "null" || rawName.trim() === "" || rawName.includes("{"));
+        // Use NID ID to determine if a dam is selected, rather than the Name.
+        // This prevents the tool from breaking when selecting unnamed dams.
+        let nidMatch = fullString.match(/[?&]nidid=(.*?)(?=&|$)/);
+        let rawNid = nidMatch ? decodeURIComponent(nidMatch[1]) : null;
+        let isDeselected = (!rawNid || rawNid === "null" || rawNid.trim() === "" || rawNid.includes("{"));
 
         function getSafeStr(paramName, defaultStr = "--") {
             if (isDeselected) {
@@ -195,6 +197,12 @@
                 let val = params.get(paramName);
                 let cleanVal = (val && val !== "null" && val.trim() !== "") ? val : "";
                 sessionStorage.setItem('damrot_' + paramName, cleanVal);
+
+                // If the dam genuinely has no name, provide a fallback label
+                if (paramName === 'name' && cleanVal === "") {
+                    return "Unnamed Dam";
+                }
+
                 return cleanVal || defaultStr;
             }
         }
